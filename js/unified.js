@@ -317,6 +317,8 @@ window.Unified = (function () {
       );
     }
     if (actions.length) html += `<div class="d-actions">${actions.join('')}</div>`;
+    // bidrag från släkten + "Föreslå ändring" (js/contribute.js)
+    if (window.Contribute && isPerson(r)) html += Contribute.drawerHtml(r);
 
     content.innerHTML = html;
     content.scrollTop = 0;
@@ -332,6 +334,7 @@ window.Unified = (function () {
       });
     });
     content.querySelectorAll('[data-place]').forEach((btn) => btn.addEventListener('click', () => showPlace(btn.dataset.place)));
+    if (window.Contribute) Contribute.hydrate(content);
     content.querySelectorAll('[data-act]').forEach((btn) => {
       btn.addEventListener('click', () => {
         if (!onReveal) return;

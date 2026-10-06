@@ -138,6 +138,16 @@ window.SiteLock = (function () {
     return JSON.parse(dec.decode(pt));
   }
 
+  // Bilder och andra filer (t.ex. media/<id>.jpg → media/<id>.jpg.enc). Returnerar en Blob.
+  async function fetchBlob(path, type) {
+    if (plain) return fetch(path + v(), { cache: 'no-store' }).then((r) => (r.ok ? r.blob() : Promise.reject(new Error(path))));
+    const r = await fetch(path + '.enc' + v());
+    if (!r.ok) throw new Error(path);
+    const buf = new Uint8Array(await r.arrayBuffer());
+    const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: buf.slice(0, 12) }, dataKey, buf.slice(12));
+    return new Blob([pt], { type: type || 'image/jpeg' });
+  }
+
   function forget() {
     store(() => {
       localStorage.removeItem(STORE_KEY);
@@ -150,5 +160,5 @@ window.SiteLock = (function () {
     location.reload();
   }
 
-  return { unlock, fetchJSON, lockNow, isEncrypted: () => !plain };
+  return { unlock, fetchJSON, fetchBlob, lockNow, isEncrypted: () => !plain };
 })();

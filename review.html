@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Granska bidrag — Beishan Yang</title>
+<meta name="robots" content="noindex, nofollow" />
+<meta name="description" content="Granskning av bidrag från släkten. Allt dekrypteras i webbläsaren." />
+<link rel="stylesheet" href="css/fonts.css?v=1791303928" />
+<link rel="stylesheet" href="css/styles.css?v=1791303928" />
+<style>
+  body { min-height: 100vh; }
+  .rv-wrap { max-width: 920px; margin: 0 auto; padding: var(--space-6) 16px var(--space-16); }
+  .rv-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); justify-content: space-between; margin-bottom: var(--space-6); }
+  .rv-head h1 { font-family: var(--font-display); font-size: var(--text-xl); margin: 0; }
+  .rv-tools { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+  .rv-tools select, .rv-btn { font: inherit; font-size: var(--text-sm); padding: 6px 14px; border-radius: 999px; border: 1px solid var(--color-border); background: var(--color-surface-2); color: var(--color-text); cursor: pointer; }
+  .rv-btn.primary { background: var(--color-primary); border-color: var(--color-primary); color: #fff; font-weight: 600; }
+  .rv-status-line { color: var(--color-text-muted); font-size: var(--text-sm); margin: 0 0 var(--space-4); }
+  .rv-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 14px; padding: var(--space-5); margin-bottom: var(--space-5); box-shadow: var(--shadow-card); }
+  .rv-card[data-status="approved"] { border-left: 5px solid var(--color-primary); }
+  .rv-card[data-status="rejected"] { border-left: 5px solid var(--color-warning); opacity: .8; }
+  .rv-card[data-status="pending"] { border-left: 5px solid var(--color-gold); }
+  .rv-meta { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; font-size: var(--text-xs); color: var(--color-text-muted); margin-bottom: var(--space-3); }
+  .rv-pill { border-radius: 999px; padding: 2px 10px; background: var(--color-surface-2); border: 1px solid var(--color-border); color: var(--color-text); font-weight: 600; }
+  .rv-pill.s-new { background: var(--color-primary-light); }
+  .rv-pill.s-approved { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
+  .rv-pill.s-rejected { background: var(--color-warning); color: #fff; border-color: var(--color-warning); }
+  .rv-pill.s-pending { background: var(--color-gold-light); border-color: var(--color-gold); }
+  .rv-text { white-space: pre-wrap; line-height: 1.6; margin: 0 0 var(--space-3); }
+  .rv-dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px var(--space-4); font-size: var(--text-sm); margin: 0 0 var(--space-3); }
+  .rv-dl dt { color: var(--color-text-muted); }
+  .rv-dl dd { margin: 0; word-break: break-word; }
+  .rv-imgs { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-3); }
+  .rv-imgs a img { width: 140px; height: 140px; object-fit: cover; border-radius: 8px; border: 1px solid var(--color-border); display: block; }
+  .rv-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: flex-start; border-top: 1px solid var(--color-border); padding-top: var(--space-3); }
+  .rv-actions textarea { flex: 1 1 260px; min-height: 3em; font: inherit; font-size: var(--text-sm); padding: var(--space-2) var(--space-3); border-radius: 8px; border: 1px solid var(--color-border); background: var(--color-surface-2); color: var(--color-text); }
+  .rv-actions .rv-btn[data-set="approved"] { border-color: var(--color-primary); color: var(--color-primary); font-weight: 600; }
+  .rv-actions .rv-btn[data-set="rejected"] { border-color: var(--color-warning); color: var(--color-warning); font-weight: 600; }
+  .rv-actions .rv-btn[data-set="pending"] { border-color: var(--color-gold); font-weight: 600; }
+  .rv-err { color: var(--color-warning); }
+  .rv-saved { font-size: var(--text-xs); color: var(--color-text-muted); align-self: center; }
+</style>
+</head>
+<body>
+<div class="lock-screen" id="rv-lock">
+  <form class="lock-card" id="rv-form" autocomplete="off">
+    <div class="lock-top"><div class="lock-mark zh" aria-hidden="true">楊</div></div>
+    <h1>Granska bidrag</h1>
+    <p class="lock-lead">Bara för Anders. Skriv adminlösenfrasen (inte sajtens lösenord). Allt dekrypteras här i webbläsaren; inget sparas.</p>
+    <label for="rv-pass">Adminlösenfras</label>
+    <input id="rv-pass" type="password" autocomplete="current-password" required autofocus>
+    <button type="submit" id="rv-submit">Lås upp</button>
+    <p class="lock-error" id="rv-error" role="alert" hidden></p>
+  </form>
+</div>
+
+<div class="rv-wrap" id="rv-main" hidden>
+  <div class="rv-head">
+    <h1>Bidrag från släkten</h1>
+    <div class="rv-tools">
+      <select id="rv-filter" aria-label="Visa">
+        <option value="all">Alla</option>
+        <option value="new">Nya (ej granskade)</option>
+        <option value="pending">Väntar</option>
+        <option value="approved">Godkända</option>
+        <option value="rejected">Avvisade</option>
+      </select>
+      <button class="rv-btn" id="rv-reload">Uppdatera</button>
+      <button class="rv-btn primary" id="rv-export">Exportera godkända</button>
+      <a class="rv-btn" href="index.html">Till sajten</a>
+    </div>
+  </div>
+  <p class="rv-status-line" id="rv-status"></p>
+  <div id="rv-list"></div>
+</div>
+
+<script>window.SITE_VERSION = "1791303928";</script>
+<script src="js/sealbox.js?v=1791303928"></script>
+<script src="js/review.js?v=1791303928"></script>
+</body>
+</html>

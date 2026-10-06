@@ -62,6 +62,7 @@
       h += `<div class="pp-list">${ls.map(personButton).join('')}</div>`;
       h += `<p class="place-approx">${T('popup_click')}</p>`;
     }
+    h += `<button class="pp-suggest" data-suggest-place="${esc(place.id)}">✎ ${esc(T('suggest_change'))}</button>`;
     return h;
   }
 
@@ -403,6 +404,9 @@
   });
 
   window.addEventListener('dataready', () => {
+    // djuplänk: #place=<id> (används t.ex. av granskningssidan)
+    const m = location.hash.match(/place=([\w-]+)/);
+    if (m && App.state.placesById[m[1]]) setTimeout(() => Unified.showPlace(m[1]), 300);
     // Map must init only once visible/sized; init lazily on first tab view.
     document.querySelector('.tab-btn[data-view="map"]').addEventListener('click', () => {
       setTimeout(() => {

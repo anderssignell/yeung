@@ -12,13 +12,17 @@ window.App = (function () {
 
   async function loadData() {
     const get = (name) => window.SiteLock.fetchJSON(name);
-    const [unified, timeline, places, customs, placesExt] = await Promise.all([
+    const [unified, timeline, places, customs, placesExt, contributions, config] = await Promise.all([
       get('unified.json'),
       get('timeline.json'),
       get('places.json'),
       get('customs.json'),
       get('places_extended.json').catch(() => ({ places: [] })),
+      get('contributions.json').catch(() => ({ items: [] })), // godkända bidrag (tools/import_contributions.py)
+      get('config.json').catch(() => null), // bidragsmottagaren (build_public.py)
     ]);
+    state.contributions = contributions;
+    state.config = config;
     state.placesExt = placesExt; // grannbyar + utvandring ur släktboken (data/extract_places.py)
     state.unified = unified;
     state.people = unified.filter((p) => p.family_id); // familjens gren (bakåtkompatibelt)
