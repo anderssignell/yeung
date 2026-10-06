@@ -655,3 +655,17 @@ body.is-locked > header, body.is-locked > main { visibility: hidden; }
   .site-header .lang-switch { margin-left: 0; }
 }
 .tree-controls button[hidden] { display: none; }
+
+/* "Hitta mamma": flytande knapp i trädets nedre högra hörn */
+.tree-stage { position: relative; }
+.tree-find {
+  position: absolute; right: 16px; bottom: 16px; z-index: 5;
+  display: inline-flex; align-items: center; gap: var(--space-1);
+  font-size: var(--text-sm); font-weight: 600; padding: var(--space-2) var(--space-4);
+  border-radius: 999px; border: 1px solid var(--color-gold); background: var(--color-surface);
+  color: var(--color-text); box-shadow: var(--shadow-card); cursor: pointer;
+}
+.tree-find:hover { background: var(--color-surface-2); border-color: var(--color-primary); color: var(--color-primary); }
+.tree-find[hidden] { display: none; }
+@keyframes tree-pulse { 0%, 100% { stroke-width: 3; } 50% { stroke-width: 9; } }
+.node-box.is-pulse rect { animation: tree-pulse .7s ease-in-out 3; }

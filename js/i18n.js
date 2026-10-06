@@ -62,6 +62,8 @@ window.I18n = (function () {
       expand_family: 'Expandera familjegrenen',
       expand_family_title: 'Återställ till familjens gren utfälld',
       expand_to_mamma: 'Ner till mammas generation',
+      find_mamma: 'Hitta mamma',
+      find_mamma_title: 'Flytta vyn tillbaka till mamma (inget fälls ihop)',
       expand_to_mamma_title: 'Familjens gren utfälld ner till mammas generation – barnen och barnbarnen döljs',
 
       tl_heading: 'Åtta hundra år, i korthet',
@@ -218,6 +220,8 @@ window.I18n = (function () {
       expand_family: 'Expand the family branch',
       expand_family_title: 'Reset to the family branch expanded',
       expand_to_mamma: 'Down to Mum’s generation',
+      find_mamma: 'Find Mum',
+      find_mamma_title: 'Move the view back to Mum (nothing is collapsed)',
       expand_to_mamma_title: 'The family branch expanded down to Mum’s generation – children and grandchildren hidden',
 
       tl_heading: 'Eight hundred years in brief',
@@ -374,6 +378,8 @@ window.I18n = (function () {
       expand_family: '展開本家分支',
       expand_family_title: '重設為展開本家分支',
       expand_to_mamma: '展開至媽媽一代',
+      find_mamma: '找媽媽',
+      find_mamma_title: '把畫面移回媽媽（不會收起任何分支）',
       expand_to_mamma_title: '本家分支展開至媽媽一代——隱藏子女及孫輩',
 
       tl_heading: '八百年簡史',

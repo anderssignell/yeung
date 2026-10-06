@@ -457,6 +457,19 @@
     const mamma = U.list.find((r) => r.highlight === 'mamma');
     const toMammaBtn = document.getElementById('expandToMamma');
     if (!mamma || mamma.family_generation == null) toMammaBtn.hidden = true;
+    // Hitta tillbaka: flytta vyn till mamma utan att fälla ihop något, och låt hennes ruta blinka till
+    const findBtn = document.getElementById('findMamma');
+    if (!mamma) findBtn.hidden = true;
+    findBtn.addEventListener('click', () => {
+      reveal(mamma.id);
+      requestAnimationFrame(() => {
+        const g = gTree.selectAll('g.node-box').filter((d) => d.data.id === mamma.id);
+        g.classed('is-pulse', false);
+        void (g.node() && g.node().getBBox());
+        g.classed('is-pulse', true);
+        setTimeout(() => g.classed('is-pulse', false), 2200);
+      });
+    });
     toMammaBtn.addEventListener('click', () => {
       foundId = mamma.id;
       initialExpansion(mamma.family_generation);
