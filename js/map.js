@@ -1,4 +1,12 @@
 (function () {
+  // Kartläge:
+  //  'auto'    – försök med OpenFreeMaps kartbilder; svarar de inte inom
+  //              ONLINE_TIMEOUT_MS används den inbyggda reservkartan.
+  //  'offline' – bara den inbyggda reservkartan (data/basemap.json), inga
+  //              anrop utanför sajten. Tänkt för fastlandskina (steg 2).
+  const MAP_MODE = 'auto';
+  const ONLINE_TIMEOUT_MS = 3000;
+
   let map, built = false;
   let markersAdded = false;
   let fitted = false;
@@ -211,16 +219,20 @@
     update();
   }
 
+  function showOfflineNote(key) {
+    const note = document.querySelector('.map-hint');
+    if (note && !document.getElementById('map-offline-note')) {
+      note.insertAdjacentHTML('afterend', `<p class="map-hint" id="map-offline-note" data-i18n="${key}">${T(key)}</p>`);
+    }
+  }
+
   async function useOffline() {
     if (offline) return;
     offline = true;
     addContextLabels();
-    const note = document.querySelector('.map-hint');
-    map.setStyle(await offlineStyle());
+    map.setStyle(await offlineStyle(), { diff: false });
     map.once('style.load', addLayers);
-    if (note && !document.getElementById('map-offline-note')) {
-      note.insertAdjacentHTML('afterend', `<p class="map-hint" id="map-offline-note" data-i18n="map_offline">${T('map_offline')}</p>`);
-    }
+    showOfflineNote('map_offline');
   }
 
   function addLayers() {
@@ -343,12 +355,17 @@
     if (activePopup && activePopup.isOpen() && activePlace) activePopup.setHTML(popupHtml(activePlace));
   });
 
-  function initMap() {
+  async function initMap() {
     if (built) return;
     built = true;
+    const startOffline = MAP_MODE === 'offline';
+    if (startOffline) {
+      offline = true;
+      showOfflineNote('map_offline_mode');
+    }
     map = new maplibregl.Map({
       container: 'map',
-      style: styleUrl(),
+      style: startOffline ? await offlineStyle() : styleUrl(),
       center: [110, 30],
       zoom: 2.2,
       attributionControl: true,
@@ -357,14 +374,18 @@
     let loaded = false;
     map.once('load', () => {
       loaded = true;
-      addLayers();
+      if (startOffline) addContextLabels();
+      if (startOffline || !offline) addLayers();
     });
-    map.on('error', () => {
-      if (!loaded) useOffline();
-    });
-    setTimeout(() => {
-      if (!loaded && !offline) useOffline();
-    }, 6000);
+    if (!startOffline) {
+      map.on('error', () => {
+        if (!loaded) useOffline();
+      });
+      // Kartservern kan vara blockerad utan att svara alls: vänta inte längre än så här.
+      setTimeout(() => {
+        if (!loaded && !offline) useOffline();
+      }, ONLINE_TIMEOUT_MS);
+    }
 
     renderList();
 
@@ -386,7 +407,7 @@
     document.querySelector('.tab-btn[data-view="map"]').addEventListener('click', () => {
       setTimeout(() => {
         if (!built) initMap();
-        else map.resize();
+        else if (map) map.resize();
       }, 30);
     });
   });

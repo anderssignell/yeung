@@ -76,6 +76,7 @@ window.I18n = (function () {
       map_heading: 'Platser i familjens historia',
       map_hint: 'Klicka på en markering för att läsa mer. Linjen visar den ungefärliga migrationsordningen.',
       map_offline: 'Förenklad karta visas (kartservern gick inte att nå).',
+      map_offline_mode: 'Förenklad karta (inbyggd i sajten, utan extern kartserver).',
       layer_family: 'Familjens resa',
       layer_villages: 'Grannbyar & giftermål',
       layer_abroad: 'Utvandring',
@@ -234,6 +235,7 @@ window.I18n = (function () {
       map_heading: 'Places in the family’s history',
       map_hint: 'Click a marker to read more. The line shows the approximate order of migration.',
       map_offline: 'Simplified map shown (the map server could not be reached).',
+      map_offline_mode: 'Simplified map (built into the site, no external map server).',
       layer_family: 'The family’s journey',
       layer_villages: 'Neighbouring villages & marriages',
       layer_abroad: 'Emigration',
@@ -392,6 +394,7 @@ window.I18n = (function () {
       map_heading: '家族歷史中的地方',
       map_hint: '點擊標記可閱讀更多。虛線顯示大致的遷徙次序。',
       map_offline: '正顯示簡化地圖（無法連接地圖伺服器）。',
+      map_offline_mode: '簡化地圖（內置於網站，不使用外部地圖伺服器）。',
       layer_family: '家族的旅程',
       layer_villages: '鄰村與婚姻',
       layer_abroad: '出洋',
@@ -610,16 +613,6 @@ window.I18n = (function () {
     }
   }
 
-  let zhFont = false;
-  function ensureFont() {
-    if (lang !== 'zh' || zhFont) return;
-    zhFont = true;
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = 'https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap';
-    document.head.appendChild(link);
-  }
-
   // Liten knappgrupp SV · EN · 中
   function switcher() {
     const wrap = document.createElement('div');
@@ -641,7 +634,6 @@ window.I18n = (function () {
     if (!STRINGS[code] || code === lang) return;
     lang = code;
     store(() => localStorage.setItem(STORE_KEY, code));
-    ensureFont();
     if (unlocked) await loadContent(code);
     apply();
     window.dispatchEvent(new CustomEvent('langchange', { detail: code }));
@@ -654,7 +646,6 @@ window.I18n = (function () {
   }
 
   function init() {
-    ensureFont();
     document.querySelectorAll('[data-lang-switch]').forEach((slot) => slot.replaceWith(switcher()));
     apply();
   }
