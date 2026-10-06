@@ -654,3 +654,4 @@ body.is-locked > header, body.is-locked > main { visibility: hidden; }
   .site-header .view-tabs { margin: 0 auto; }
   .site-header .lang-switch { margin-left: 0; }
 }
+.tree-controls button[hidden] { display: none; }

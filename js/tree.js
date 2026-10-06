@@ -117,14 +117,17 @@
     return count;
   }
 
-  function initialExpansion() {
+  // maxGen: fäll bara ut familjens personer i generationer FÖRE maxGen
+  // (t.ex. mammas generation: hon och hennes syskon syns, men hopfällda).
+  function initialExpansion(maxGen) {
     expanded.clear();
     shown.clear();
     forced.clear();
     // familjens gren (som tidigare) + alla dess förfäder; klanens övriga
     // grenar ligger hopfällda med "+N"-knappar
     U.list.forEach((r) => {
-      if (r.family_id && kidsOf(r.id).length) {
+      const genOk = maxGen == null || (r.family_generation != null && r.family_generation < maxGen);
+      if (r.family_id && kidsOf(r.id).length && genOk) {
         Unified.ancestors(r.id).forEach((a) => expanded.add(a.id));
       }
     });
@@ -343,7 +346,8 @@
     if (!fullW || !fullH) return;
     const w = bounds.width || 1;
     const h = bounds.height || 1;
-    const scale = Math.max(0.15, Math.min(0.9, 0.9 * Math.min(fullW / w, fullH / h)));
+    // 60 px luft upptill (ty nedan) och lika mycket nedtill, så att understa raden syns helt
+    const scale = Math.max(0.15, Math.min(0.9, 0.9 * Math.min(fullW / w, (fullH - 120) / h)));
     const tx = fullW / 2 - (bounds.x + w / 2) * scale;
     const ty = 60 - bounds.y * scale;
     svg.transition().duration(400).call(zoomBehavior.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
@@ -450,6 +454,15 @@
     document.getElementById('zoomIn').addEventListener('click', () => svg.transition().call(zoomBehavior.scaleBy, 1.3));
     document.getElementById('zoomOut').addEventListener('click', () => svg.transition().call(zoomBehavior.scaleBy, 0.75));
     document.getElementById('zoomReset').addEventListener('click', fitToScreen);
+    const mamma = U.list.find((r) => r.highlight === 'mamma');
+    const toMammaBtn = document.getElementById('expandToMamma');
+    if (!mamma || mamma.family_generation == null) toMammaBtn.hidden = true;
+    toMammaBtn.addEventListener('click', () => {
+      foundId = mamma.id;
+      initialExpansion(mamma.family_generation);
+      render();
+      requestAnimationFrame(fitToScreen);
+    });
     document.getElementById('expandAll').addEventListener('click', () => {
       foundId = null;
       initialExpansion();

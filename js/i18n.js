@@ -61,6 +61,8 @@ window.I18n = (function () {
       zoom_reset: 'Återställ vy',
       expand_family: 'Expandera familjegrenen',
       expand_family_title: 'Återställ till familjens gren utfälld',
+      expand_to_mamma: 'Ner till mammas generation',
+      expand_to_mamma_title: 'Familjens gren utfälld ner till mammas generation – barnen och barnbarnen döljs',
 
       tl_heading: 'Åtta hundra år, i korthet',
       tl_intro: 'Från stamfaderns flytt från Nánxióng 1237, genom Qing-dynastins kustförbud, till den tryckta släktboken 1857 och familjens egen resa till Hongkong och Sverige.',
@@ -215,6 +217,8 @@ window.I18n = (function () {
       zoom_reset: 'Reset view',
       expand_family: 'Expand the family branch',
       expand_family_title: 'Reset to the family branch expanded',
+      expand_to_mamma: 'Down to Mum’s generation',
+      expand_to_mamma_title: 'The family branch expanded down to Mum’s generation – children and grandchildren hidden',
 
       tl_heading: 'Eight hundred years in brief',
       tl_intro: 'From the founding ancestor’s move from Nánxióng in 1237, through the Qing dynasty’s coastal ban, to the printed genealogy of 1857 and the family’s own journey to Hong Kong and Sweden.',
@@ -369,6 +373,8 @@ window.I18n = (function () {
       zoom_reset: '重設檢視',
       expand_family: '展開本家分支',
       expand_family_title: '重設為展開本家分支',
+      expand_to_mamma: '展開至媽媽一代',
+      expand_to_mamma_title: '本家分支展開至媽媽一代——隱藏子女及孫輩',
 
       tl_heading: '八百年簡史',
       tl_intro: '從始祖於1237年自南雄遷出，經歷清朝遷海令，到1857年刊印族譜，以及家族遷往香港和瑞典的旅程。',
