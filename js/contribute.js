@@ -239,7 +239,7 @@ window.Contribute = (function () {
         if (sealed.length > MAX_TOTAL) throw Object.assign(new Error('size'), { msg: T('cf_err_too_big', { name: '' }) });
         const r = await fetch(cfg.endpoint.replace(/\/$/, '') + '/submit', {
           method: 'POST',
-          headers: { Authorization: 'Bearer ' + cfg.submit_token, 'Content-Type': 'application/octet-stream' },
+          headers: { 'X-Submit-Token': cfg.submit_token, 'Content-Type': 'application/octet-stream' },
           body: sealed,
         });
         if (r.status === 429) throw Object.assign(new Error('rate'), { msg: T('cf_err_rate') });

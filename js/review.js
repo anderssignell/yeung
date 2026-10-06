@@ -6,6 +6,7 @@
 // webbläsaren. Sidan innehåller själv inga uppgifter och sparar inget.
 (function () {
   const MIN_PASSPHRASE = 16;
+  const MAX_NOTE = 1000; // mottagaren sparar högst 1000 tecken (krypterad kommentar)
   const TYPE_LABEL = { correction: 'Rättelse', more: 'Mer om personen', relative: 'Ny släkting', photo: 'Foto eller dokument', other: 'Annat' };
   const STATUS_LABEL = { new: 'Ny', pending: 'Väntar', approved: 'Godkänd', rejected: 'Avvisad' };
   const LANG_LABEL = { sv: 'svenska', en: 'engelska', zh: 'kinesiska' };
@@ -75,6 +76,8 @@
     const list = (await (await api('/list')).json()).items;
     let n = 0;
     for (const meta of list) {
+      // Mottagaren märker nya bidrag "pending"; utan granskningsdatum är de ogranskade.
+      if (meta.status === 'pending' && !meta.updated) meta.status = 'new';
       const it = { meta, note: await openNote(meta.note), images: [] };
       try {
         const blob = new Uint8Array(await (await api('/item/' + meta.id)).arrayBuffer());
@@ -127,6 +130,7 @@
         <button class="rv-btn" data-set="approved">Godkänn</button>
         <button class="rv-btn" data-set="rejected">Avvisa</button>
         <button class="rv-btn" data-set="pending">Vänta</button>
+        <button class="rv-btn" data-delete>Radera</button>
         <span class="rv-saved"></span>
       </div></div>`;
   }
@@ -149,9 +153,13 @@
     const saved = cardEl.querySelector('.rv-saved');
     saved.textContent = 'Sparar …';
     try {
-      const note = text ? SealBox.b64(await SealBox.sealJSON(session.pub, { text })) : null;
-      const res = await (await api('/status/' + it.meta.id, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status, note }) })).json();
-      Object.assign(it.meta, { status: res.status, updated: res.updated, note });
+      const note = text ? SealBox.b64(await SealBox.sealJSON(session.pub, { text })) : '';
+      if (note.length > MAX_NOTE) {
+        saved.textContent = 'Kommentaren är för lång – korta ner den (ungefär 400 tecken räcker).';
+        return;
+      }
+      await api('/status/' + it.meta.id, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status, note }) });
+      Object.assign(it.meta, { status, updated: new Date().toISOString(), note });
       it.note = text;
       render();
       const el = document.querySelector(`.rv-card[data-id="${it.meta.id}"] .rv-saved`);
@@ -283,7 +291,20 @@
   $('rv-filter').addEventListener('change', render);
   $('rv-reload').addEventListener('click', () => load().catch((e) => ($('rv-status').textContent = 'Fel: ' + e.message)));
   $('rv-export').addEventListener('click', exportApproved);
-  $('rv-list').addEventListener('click', (e) => {
+  $('rv-list').addEventListener('click', async (e) => {
+    const del = e.target.closest('[data-delete]');
+    if (del) {
+      const cardEl = del.closest('.rv-card');
+      if (!confirm('Radera bidraget för gott hos mottagaren? Det går inte att ångra.')) return;
+      try {
+        await api('/item/' + cardEl.dataset.id, { method: 'DELETE' });
+        items = items.filter((x) => x.meta.id !== cardEl.dataset.id);
+        render();
+      } catch (ex) {
+        cardEl.querySelector('.rv-saved').textContent = 'Kunde inte radera: ' + ex.message;
+      }
+      return;
+    }
     const b = e.target.closest('[data-set]');
     if (b) setStatus(b.closest('.rv-card'), b.dataset.set);
   });
