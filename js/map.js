@@ -9,15 +9,14 @@
     return document.documentElement.getAttribute('data-theme') === 'dark';
   }
 
-  const REL_SV = {
-    wife: 'hustru härifrån',
-    daughter: 'dotter gift hit',
-    abroad: 'reste/dog här',
-    mention: 'nämns',
-  };
+  const T = (k, v) => I18n.t(k, v);
+  const relLabel = (r) => (['wife', 'daughter', 'abroad', 'mention'].includes(r) ? T('rel_' + r) : r);
+  const nameOf = (place) => I18n.dt(place.name);
   const LAYERS = { family: true, villages: true, abroad: true };
   let pendingFocus = null;
   let activePopup = null;
+  let activePlace = null;
+  const markerLabels = []; // { el, place, short } – byter text vid språkbyte
   const esc = (s) => (window.Unified ? Unified.esc(s) : String(s == null ? '' : s));
 
   function extPlaces() {
@@ -30,10 +29,10 @@
   function countsText(place) {
     const c = place.counts || {};
     const parts = [];
-    if (c.wife) parts.push(`${c.wife} ${c.wife === 1 ? 'hustru' : 'hustrur'} härifrån`);
-    if (c.daughter) parts.push(`${c.daughter} ${c.daughter === 1 ? 'dotter' : 'döttrar'} gifte in sig här`);
-    if (c.abroad) parts.push(`${c.abroad} ${c.abroad === 1 ? 'klanmedlem' : 'klanmedlemmar'} reste eller dog här`);
-    if (c.mention) parts.push(`nämns ${c.mention} gånger till`);
+    if (c.wife) parts.push(T('count_wife', { n: c.wife }));
+    if (c.daughter) parts.push(T('count_daughter', { n: c.daughter }));
+    if (c.abroad) parts.push(T('count_abroad', { n: c.abroad }));
+    if (c.mention) parts.push(T('count_mention', { n: c.mention }));
     return parts.join(' · ');
   }
   function personButton(l) {
@@ -41,19 +40,19 @@
     if (!r) return '';
     return `<button class="pp-person" data-person="${esc(l.id)}" title="${esc(l.snippet || '')}">
       <span class="pp-name">${esc(Unified.displayName(r))}</span>
-      <span class="pp-rel">${esc(REL_SV[l.rel] || l.rel)}${r.generation ? ' · gen. ' + (r.generation_estimated ? '≈' : '') + r.generation : ''}</span>
+      <span class="pp-rel">${esc(relLabel(l.rel))}${r.generation ? ' · ' + esc(T(r.generation_estimated ? 'gen_short_est' : 'gen_short', { g: r.generation })) : ''}</span>
     </button>`;
   }
 
   function popupHtml(place) {
-    let h = `<div class="popup-title">${esc(place.name)}</div><p class="popup-desc">${esc(place.description)}${place.approx ? '<br><span class="place-approx">Ungefärlig position</span>' : ''}</p>`;
-    if (place.source_url) h += `<p class="popup-desc"><a href="${esc(place.source_url)}" target="_blank" rel="noopener">Källa: China Daily</a></p>`;
+    let h = `<div class="popup-title">${esc(nameOf(place))}</div><p class="popup-desc">${esc(I18n.dt(place.description))}${place.approx ? `<br><span class="place-approx">${T('approx_pos')}</span>` : ''}</p>`;
+    if (place.source_url) h += `<p class="popup-desc"><a href="${esc(place.source_url)}" target="_blank" rel="noopener">${T('source_china_daily')}</a></p>`;
     if (place.persons && place.persons.length) {
       h += `<p class="popup-counts">${esc(countsText(place))}</p>`;
       const order = { abroad: 0, wife: 1, daughter: 2, mention: 3 };
       const ls = place.persons.slice().sort((x, y) => (order[x.rel] - order[y.rel]));
       h += `<div class="pp-list">${ls.map(personButton).join('')}</div>`;
-      h += `<p class="place-approx">Klicka på en person för att visa hen i släktträdet. Uppgifterna är hämtade ur 1857 års släktbok.</p>`;
+      h += `<p class="place-approx">${T('popup_click')}</p>`;
     }
     return h;
   }
@@ -61,9 +60,9 @@
   function cardHtml(p) {
     const n = p.persons ? p.persons.length : 0;
     return `<div class="place-card${p.lat == null ? ' no-coords' : ''}" data-place="${esc(p.id)}" tabindex="0">
-      <h4>${esc(p.name)}${n ? ` <span class="place-count">${n}</span>` : ''}</h4>
-      <p>${esc(p.persons ? countsText(p) || p.description : p.description)}</p>
-      ${p.lat == null ? '<p class="place-approx">Läget är okänt – visas inte på kartan</p>' : p.approx ? '<p class="place-approx">Ungefärlig position</p>' : ''}
+      <h4>${esc(nameOf(p))}${n ? ` <span class="place-count">${n}</span>` : ''}</h4>
+      <p>${esc(p.persons ? countsText(p) || I18n.dt(p.description) : I18n.dt(p.description))}</p>
+      ${p.lat == null ? `<p class="place-approx">${T('unknown_pos')}</p>` : p.approx ? `<p class="place-approx">${T('approx_pos')}</p>` : ''}
     </div>`;
   }
 
@@ -75,10 +74,10 @@
     const toggle = (key, label) =>
       `<label class="map-layer-toggle"><input type="checkbox" id="layer-${key}" data-layer="${key}" ${LAYERS[key] ? 'checked' : ''}> ${label}</label>`;
     list.innerHTML =
-      `<div class="map-layers">${toggle('family', 'Familjens resa')}${toggle('villages', 'Grannbyar & giftermål')}${toggle('abroad', 'Utvandring')}</div>` +
-      `<h3 class="map-section">Familjens resa</h3>` + App.state.places.map(cardHtml).join('') +
-      `<h3 class="map-section">Utvandring på 1800-talet</h3><p class="map-hint">Klanmedlemmar som enligt boken reste eller dog utomlands.</p>` + abroad.map(cardHtml).join('') +
-      `<h3 class="map-section">Grannbyar och giftermål</h3><p class="map-hint">Byar som nämns i släktboken, oftast som hustrurnas hemby eller dit döttrarna gifte sig. Siffran är antalet personer i boken som kopplas till byn.</p>` +
+      `<div class="map-layers">${toggle('family', T('layer_family'))}${toggle('villages', T('layer_villages'))}${toggle('abroad', T('layer_abroad'))}</div>` +
+      `<h3 class="map-section">${T('map_sec_family')}</h3>` + App.state.places.map(cardHtml).join('') +
+      `<h3 class="map-section">${T('map_sec_abroad')}</h3><p class="map-hint">${T('map_hint_abroad')}</p>` + abroad.map(cardHtml).join('') +
+      `<h3 class="map-section">${T('map_sec_villages')}</h3><p class="map-hint">${T('map_hint_villages')}</p>` +
       villages.map(cardHtml).join('');
     list.querySelectorAll('.place-card').forEach((card) => {
       card.addEventListener('click', () => flyTo(card.dataset.place));
@@ -120,6 +119,7 @@
     const zoom = place.kind === 'abroad' ? 4 : place.persons ? 10.5 : 5;
     map.flyTo({ center: [place.lng, place.lat], zoom, duration: 900 });
     if (activePopup) activePopup.remove();
+    activePlace = place;
     activePopup = new maplibregl.Popup({ closeButton: true, offset: 16, maxWidth: '340px' })
       .setLngLat([place.lng, place.lat])
       .setHTML(popupHtml(place))
@@ -161,30 +161,35 @@
   }
   // Ortnamn för reservkartan (den har inga egna etiketter). minZoom styr när
   // namnet visas, så att kartan inte blir rörig när man zoomat ut.
+  // name: [svenska, engelska, kinesiska]
   const CONTEXT_LABELS = [
-    { name: 'Kina', lng: 104, lat: 34, kind: 'country', minZoom: 0 },
-    { name: 'Mongoliet', lng: 103, lat: 46.8, kind: 'country', minZoom: 1.5 },
-    { name: 'Indien', lng: 79, lat: 22, kind: 'country', minZoom: 1.5 },
-    { name: 'Ryssland', lng: 50, lat: 58, kind: 'country', minZoom: 1.5 },
-    { name: 'Vietnam', lng: 106.2, lat: 16.5, kind: 'country', minZoom: 3 },
-    { name: 'Taiwan', lng: 121, lat: 23.7, kind: 'country', minZoom: 3.5 },
-    { name: 'Norge', lng: 9.5, lat: 61.5, kind: 'country', minZoom: 2.5 },
-    { name: 'Finland', lng: 26.5, lat: 63, kind: 'country', minZoom: 2.5 },
-    { name: 'Sydkinesiska havet', lng: 115, lat: 15, kind: 'sea', minZoom: 2.5 },
-    { name: 'Östkinesiska havet', lng: 125, lat: 28.5, kind: 'sea', minZoom: 3.5 },
-    { name: 'Östersjön', lng: 19.3, lat: 57.3, kind: 'sea', minZoom: 3 },
-    { name: 'Guangdong 廣東', lng: 112.4, lat: 24.2, kind: 'region', minZoom: 4 },
-    { name: 'Fujian 福建', lng: 117.8, lat: 26.4, kind: 'region', minZoom: 4 },
-    { name: 'Jiangxi 江西', lng: 115.6, lat: 27.6, kind: 'region', minZoom: 4 },
-    { name: 'Guangxi 廣西', lng: 108.6, lat: 23.6, kind: 'region', minZoom: 4 },
-    { name: 'Hunan 湖南', lng: 111.7, lat: 27.4, kind: 'region', minZoom: 4.5 },
-    { name: 'Guangzhou 廣州', lng: 113.26, lat: 23.13, kind: 'city', minZoom: 5 },
-    { name: 'Macao 澳門', lng: 113.54, lat: 22.19, kind: 'city', minZoom: 7 },
-    { name: 'Fuzhou 福州', lng: 119.3, lat: 26.07, kind: 'city', minZoom: 5 },
-    { name: 'Shanghai 上海', lng: 121.47, lat: 31.23, kind: 'city', minZoom: 4 },
-    { name: 'Peking 北京', lng: 116.4, lat: 39.9, kind: 'city', minZoom: 3.5 },
-    { name: 'Göteborg', lng: 11.97, lat: 57.71, kind: 'city', minZoom: 5 },
+    { name: ['Kina', 'China', '中國'], lng: 104, lat: 34, kind: 'country', minZoom: 0 },
+    { name: ['Mongoliet', 'Mongolia', '蒙古'], lng: 103, lat: 46.8, kind: 'country', minZoom: 1.5 },
+    { name: ['Indien', 'India', '印度'], lng: 79, lat: 22, kind: 'country', minZoom: 1.5 },
+    { name: ['Ryssland', 'Russia', '俄羅斯'], lng: 50, lat: 58, kind: 'country', minZoom: 1.5 },
+    { name: ['Vietnam', 'Vietnam', '越南'], lng: 106.2, lat: 16.5, kind: 'country', minZoom: 3 },
+    { name: ['Taiwan', 'Taiwan', '台灣'], lng: 121, lat: 23.7, kind: 'country', minZoom: 3.5 },
+    { name: ['Norge', 'Norway', '挪威'], lng: 9.5, lat: 61.5, kind: 'country', minZoom: 2.5 },
+    { name: ['Finland', 'Finland', '芬蘭'], lng: 26.5, lat: 63, kind: 'country', minZoom: 2.5 },
+    { name: ['Sydkinesiska havet', 'South China Sea', '南海'], lng: 115, lat: 15, kind: 'sea', minZoom: 2.5 },
+    { name: ['Östkinesiska havet', 'East China Sea', '東海'], lng: 125, lat: 28.5, kind: 'sea', minZoom: 3.5 },
+    { name: ['Östersjön', 'Baltic Sea', '波羅的海'], lng: 19.3, lat: 57.3, kind: 'sea', minZoom: 3 },
+    { name: ['Guangdong 廣東', 'Guangdong 廣東', '廣東'], lng: 112.4, lat: 24.2, kind: 'region', minZoom: 4 },
+    { name: ['Fujian 福建', 'Fujian 福建', '福建'], lng: 117.8, lat: 26.4, kind: 'region', minZoom: 4 },
+    { name: ['Jiangxi 江西', 'Jiangxi 江西', '江西'], lng: 115.6, lat: 27.6, kind: 'region', minZoom: 4 },
+    { name: ['Guangxi 廣西', 'Guangxi 廣西', '廣西'], lng: 108.6, lat: 23.6, kind: 'region', minZoom: 4 },
+    { name: ['Hunan 湖南', 'Hunan 湖南', '湖南'], lng: 111.7, lat: 27.4, kind: 'region', minZoom: 4.5 },
+    { name: ['Guangzhou 廣州', 'Guangzhou 廣州', '廣州'], lng: 113.26, lat: 23.13, kind: 'city', minZoom: 5 },
+    { name: ['Macao 澳門', 'Macao 澳門', '澳門'], lng: 113.54, lat: 22.19, kind: 'city', minZoom: 7 },
+    { name: ['Fuzhou 福州', 'Fuzhou 福州', '福州'], lng: 119.3, lat: 26.07, kind: 'city', minZoom: 5 },
+    { name: ['Shanghai 上海', 'Shanghai 上海', '上海'], lng: 121.47, lat: 31.23, kind: 'city', minZoom: 4 },
+    { name: ['Peking 北京', 'Beijing 北京', '北京'], lng: 116.4, lat: 39.9, kind: 'city', minZoom: 3.5 },
+    { name: ['Göteborg', 'Gothenburg', '哥德堡'], lng: 11.97, lat: 57.71, kind: 'city', minZoom: 5 },
   ];
+  const labelName = (l) => l.name[{ sv: 0, en: 1, zh: 2 }[I18n.lang] || 0];
+  function contextLabelHtml(l) {
+    return l.kind === 'city' ? `<span class="ctx-dot"></span>${esc(labelName(l))}` : esc(labelName(l));
+  }
   const LABEL_LEFT = new Set(['beishan']);
   const contextMarkers = [];
   function addContextLabels() {
@@ -192,11 +197,11 @@
     CONTEXT_LABELS.forEach((l) => {
       const el = document.createElement('div');
       el.className = 'ctx-label ctx-' + l.kind;
-      el.innerHTML = l.kind === 'city' ? `<span class="ctx-dot"></span>${l.name}` : l.name;
+      el.innerHTML = contextLabelHtml(l);
       const m = new maplibregl.Marker({ element: el, anchor: l.kind === 'city' ? 'left' : 'center', offset: l.kind === 'city' ? [-3, 0] : [0, 0] })
         .setLngLat([l.lng, l.lat])
         .addTo(map);
-      contextMarkers.push({ m, el, minZoom: l.minZoom });
+      contextMarkers.push({ m, el, minZoom: l.minZoom, label: l });
     });
     const update = () => {
       const z = map.getZoom();
@@ -214,7 +219,7 @@
     map.setStyle(await offlineStyle());
     map.once('style.load', addLayers);
     if (note && !document.getElementById('map-offline-note')) {
-      note.insertAdjacentHTML('afterend', '<p class="map-hint" id="map-offline-note">Förenklad karta visas (kartservern gick inte att nå).</p>');
+      note.insertAdjacentHTML('afterend', `<p class="map-hint" id="map-offline-note" data-i18n="map_offline">${T('map_offline')}</p>`);
     }
   }
 
@@ -226,13 +231,12 @@
     if (!markersAdded) places.forEach((place) => {
       const el = document.createElement('div');
       el.className = 'place-marker';
-      const short = place.name.split(' (')[0];
       // Beishan och Hongkong ligger nära varandra: Beishans namn skrivs till vänster
       const left = LABEL_LEFT.has(place.id);
       el.innerHTML = left
-        ? `<span class="place-label">${short}</span><span class="place-dot"></span>`
-        : `<span class="place-dot"></span><span class="place-label">${short}</span>`;
-      el.title = place.name;
+        ? `<span class="place-label"></span><span class="place-dot"></span>`
+        : `<span class="place-dot"></span><span class="place-label"></span>`;
+      markerLabels.push({ el, place, label: el.querySelector('.place-label'), short: (n) => n.split(' (')[0] });
       el.addEventListener('click', () => flyTo(place.id));
       new maplibregl.Marker({ element: el, anchor: left ? 'right' : 'left', offset: [left ? 9 : -9, 0] })
         .setLngLat([place.lng, place.lat])
@@ -245,16 +249,15 @@
         const el = document.createElement('div');
         const lay = layerOf(place);
         el.dataset.maplayer = lay;
-        const short = place.name.split(' (')[0].split(' – ')[0];
         if (lay === 'abroad') {
           el.className = 'place-marker abroad-marker';
-          el.innerHTML = `<span class="place-dot"></span><span class="place-label">${esc(short)}</span>`;
+          el.innerHTML = `<span class="place-dot"></span><span class="place-label"></span>`;
         } else {
           const size = Math.round(10 + 26 * Math.sqrt(place.persons.length / maxN));
           el.className = 'village-marker';
-          el.innerHTML = `<span class="village-dot" style="width:${size}px;height:${size}px"></span><span class="village-label">${esc(short)}</span>`;
+          el.innerHTML = `<span class="village-dot" style="width:${size}px;height:${size}px"></span><span class="village-label"></span>`;
         }
-        el.title = place.name + (place.persons.length ? ' – ' + countsText(place) : '');
+        markerLabels.push({ el, place, label: el.querySelector('.place-label, .village-label'), short: (n) => n.split(' (')[0].split(' – ')[0] });
         el.addEventListener('click', (e) => {
           e.stopPropagation();
           flyTo(place.id);
@@ -271,6 +274,7 @@
       map.on('zoom', upd);
       upd();
     }
+    if (!markersAdded) relabelMarkers();
     markersAdded = true;
 
     // utvandringslinjer från Beishan
@@ -316,6 +320,28 @@
       setTimeout(() => flyTo(f), 50);
     }
   }
+
+  function relabelMarkers() {
+    markerLabels.forEach((m) => {
+      const name = nameOf(m.place);
+      m.label.textContent = m.short(name);
+      m.el.title = name + (m.place.persons && m.place.persons.length ? ' – ' + countsText(m.place) : '');
+    });
+    contextMarkers.forEach((c) => (c.el.innerHTML = contextLabelHtml(c.label)));
+  }
+
+  // nytt språk: lista, markörer och öppen popup
+  window.addEventListener('langchange', () => {
+    if (!built) return;
+    const active = document.querySelector('.place-card.is-active');
+    renderList();
+    if (active) {
+      const card = document.querySelector(`.place-card[data-place="${active.dataset.place}"]`);
+      if (card) card.classList.add('is-active');
+    }
+    relabelMarkers();
+    if (activePopup && activePopup.isOpen() && activePlace) activePopup.setHTML(popupHtml(activePlace));
+  });
 
   function initMap() {
     if (built) return;

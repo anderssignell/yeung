@@ -12,11 +12,7 @@
     const groups = U.list.filter((r) => r.kind === 'group').length;
     const unplaced = U.byId['grp_unplaced'] ? U.size['grp_unplaced'] - groups : 0;
     const connected = persons.length - unplaced;
-    document.getElementById('clan-stats').textContent =
-      `${bookRecords.toLocaleString('sv-SE')} poster ur alla tio volymer. Efter att dubbletter (samma person registrerad i både släktschema och biografidel) slagits ihop blir det ` +
-      `${persons.length.toLocaleString('sv-SE')} personer inklusive familjens egen moderna gren. ` +
-      `${connected.toLocaleString('sv-SE')} av dem hänger ihop i en obruten kedja från Sìrú-gong; resten ligger i grenar vars koppling uppåt inte framgår av källan. ` +
-      `Kantonesiska namn märkta † / "Jyutping, ej källbelagt" är mekaniskt genererade från tecknen – använd Pinyin för säkra referenser till 1857 års bok.`;
+    document.getElementById('clan-stats').textContent = I18n.t('clan_stats', { records: bookRecords, persons: persons.length, connected });
   }
 
   function renderBranchList() {
@@ -34,11 +30,12 @@
         const r = U.byId[id];
         const isRoot = id === U.rootId;
         const n = isRoot && U.byId['grp_unplaced'] ? U.size[id] - U.size['grp_unplaced'] - 1 : U.size[id] - 1;
-        const tag = isRoot ? 'i obruten kedja från stamfadern' : (r.generation ? 'Gen. ' + (r.generation_estimated ? '≈' : '') + r.generation + ' · koppling uppåt okänd' : 'koppling uppåt okänd');
+        const up = I18n.t('link_up_unknown');
+        const tag = isRoot ? I18n.t('clan_root_tag') : r.generation ? I18n.t(r.generation_estimated ? 'gen_short_est' : 'gen_short', { g: r.generation }) + ' · ' + up : up;
         return `<button class="cl-branch-card" data-goto="${Unified.esc(id)}">
           <span class="cl-branch-hanzi zh">${Unified.esc(r.hanzi || '')}</span>
           <span class="cl-branch-pinyin">${Unified.esc(r.western || r.pinyin || '')}</span>
-          <span class="cl-branch-count">${n} ättlingar · ${Unified.esc(tag)}</span>
+          <span class="cl-branch-count">${I18n.t('descendants', { n })} · ${Unified.esc(tag)}</span>
         </button>`;
       })
       .join('');
@@ -46,7 +43,7 @@
       btn.addEventListener('click', () => Unified.openDrawer(btn.dataset.goto, { from: 'clan' }));
     });
     document.getElementById('clan-more-note').textContent =
-      smallCount > 0 ? `+ ${smallCount} mindre grenar och enskilda poster (sök på namn ovan för att hitta dem).` : '';
+      smallCount > 0 ? I18n.t('clan_more', { n: smallCount }) : '';
   }
 
   function runSearch(q) {
@@ -59,7 +56,7 @@
     const hits = Unified.search(q, 40);
     resultsEl.hidden = false;
     if (!hits.length) {
-      resultsEl.innerHTML = `<p class="cl-note">Inga träffar.</p>`;
+      resultsEl.innerHTML = `<p class="cl-note">${I18n.t('no_hits')}</p>`;
       return;
     }
     resultsEl.innerHTML = hits
@@ -68,7 +65,7 @@
         const n = U.size[id] - 1;
         return `<button class="cl-search-hit" data-goto="${Unified.esc(id)}">
           <span>${Unified.esc(Unified.displayName(r))}</span>
-          ${n > 0 ? `<span class="cl-count">${n} ättlingar</span>` : ''}
+          ${n > 0 ? `<span class="cl-count">${I18n.t('descendants', { n })}</span>` : ''}
         </button>`;
       })
       .join('');
@@ -88,6 +85,12 @@
   }
 
   window.addEventListener('dataready', build);
+  window.addEventListener('langchange', () => {
+    if (!built) return;
+    renderStats();
+    renderBranchList();
+    runSearch(document.getElementById('clan-search-input').value);
+  });
   window.addEventListener('viewchange', (e) => {
     if (e.detail === 'clan') build();
   });

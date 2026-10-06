@@ -47,24 +47,32 @@
   function nodeLabelLines(r) {
     const lines = [];
     if (r.kind === 'group') {
-      lines.push({ text: r.pinyin, cls: 'n-pinyin' });
-      lines.push({ text: r.western, cls: 'n-western' });
-      lines.push({ text: r.fragments + ' lösa grenar', cls: 'n-gen' });
+      lines.push({ text: I18n.dt(r.pinyin), cls: 'n-pinyin' });
+      lines.push({ text: I18n.dt(r.western), cls: 'n-western' });
+      lines.push({ text: I18n.t('loose_branches', { n: r.fragments }), cls: 'n-gen' });
       return lines;
     }
+    const gapNode = r.confidence === 'gap' && !r.hanzi; // "10 generationer" o.d.
     if (r.western) {
       const mark = r.western_generated ? ' †' : '';
-      lines.push({ text: r.western + mark, cls: 'n-pinyin' });
+      lines.push({ text: (gapNode ? I18n.dt(r.western) : r.western) + mark, cls: 'n-pinyin' });
     }
     if (r.hanzi) lines.push({ text: r.hanzi, cls: 'n-hanzi' });
-    if (r.pinyin) lines.push({ text: r.pinyin, cls: 'n-western' });
+    if (r.pinyin) lines.push({ text: gapNode ? I18n.dt(r.pinyin) : r.pinyin, cls: 'n-western' });
     const g = Unified.genText(r);
     if (g) lines.push({ text: g, cls: 'n-gen' });
     if (r.spouse) {
       const s = r.spouse;
-      lines.push({ text: '— g. ' + [s.western, s.hanzi, s.pinyin].filter(Boolean).join(' '), cls: 'n-western' });
+      lines.push({ text: I18n.t('spouse_prefix') + [s.western, s.hanzi, s.pinyin].filter(Boolean).join(' '), cls: 'n-western' });
     }
     return lines.slice(0, 5);
+  }
+
+  // ungefärlig textbredd i px (kinesiska tecken är ungefär dubbelt så breda)
+  function textWidth(s, w) {
+    let n = 0;
+    for (const ch of s) n += /[\u2e80-\u9fff\uff00-\uffef]/.test(ch) ? w * 1.85 : w;
+    return n;
   }
 
   function elbow(s, t) {
@@ -248,7 +256,7 @@
       const info = ctl.append('g').attr('class', 'n-info').attr('transform', `translate(${NODE_W - 1},1)`);
       info.append('circle').attr('r', 7.5);
       info.append('text').attr('text-anchor', 'middle').attr('dy', 4).text('i');
-      info.append('title').text('Visa detaljer och källor');
+      info.append('title').text(I18n.t('info_title'));
       info.on('click', (event) => {
         event.stopPropagation();
         showInfo(id);
@@ -258,17 +266,17 @@
       const isOpen = expanded.has(id);
       const desc = U.size[id] - 1;
       const showAll = !isOpen && desc > ks.length;
-      const mainLabel = isOpen ? '▴ Fäll ihop' : `▾ ${ks.length} ${ks.length === 1 ? 'barn' : 'barn'}`;
-      const mainW = Math.max(58, mainLabel.length * 6.4 + 16);
-      const allLabel = `Hela grenen (${desc})`;
-      const allW = allLabel.length * 6 + 16;
+      const mainLabel = isOpen ? I18n.t('collapse') : I18n.t('children_pill', { n: ks.length });
+      const mainW = Math.max(58, textWidth(mainLabel, 6.4) + 16);
+      const allLabel = I18n.t('whole_branch', { n: desc });
+      const allW = textWidth(allLabel, 6) + 16;
       const total = mainW + (showAll ? allW + 6 : 0);
       let x = NODE_W / 2 - total / 2;
 
       const main = ctl.append('g').attr('class', 'n-pill n-pill-main' + (isOpen ? ' is-open' : '')).attr('transform', `translate(${x},${NODE_H - 3})`);
       main.append('rect').attr('width', mainW).attr('height', 20).attr('rx', 10);
       main.append('text').attr('x', mainW / 2).attr('y', 14).attr('text-anchor', 'middle').text(mainLabel);
-      main.append('title').text(isOpen ? 'Fäll ihop grenen' : `Visa ${ks.length} barn (${desc} ättlingar totalt)`);
+      main.append('title').text(isOpen ? I18n.t('collapse_title') : I18n.t('children_title', { k: ks.length, n: desc }));
       main.on('click', (event) => {
         event.stopPropagation();
         toggle(id);
@@ -279,7 +287,7 @@
         const all = ctl.append('g').attr('class', 'n-pill n-pill-all').attr('transform', `translate(${x},${NODE_H - 3})`);
         all.append('rect').attr('width', allW).attr('height', 20).attr('rx', 10);
         all.append('text').attr('x', allW / 2).attr('y', 14).attr('text-anchor', 'middle').text(allLabel);
-        all.append('title').text(desc <= 400 ? `Fäll ut alla ${desc} ättlingar` : `Fäll ut tre generationer (grenen har ${desc} ättlingar)`);
+        all.append('title').text(I18n.t(desc <= 400 ? 'whole_branch_title' : 'whole_branch_title_big', { n: desc }));
         all.on('click', (event) => {
           event.stopPropagation();
           expandSubtree(id, desc <= 400 ? Infinity : 3);
@@ -308,9 +316,9 @@
     moreEnter.append('text').attr('x', MORE_W / 2).attr('y', MORE_H / 2 + 4).attr('text-anchor', 'middle');
     const moreMerge = moreEnter.merge(moreSel);
     moreMerge.attr('transform', (d) => `translate(${d.x - MORE_W / 2},${d.y - MORE_H / 2})`);
-    moreMerge.select('text').text((d) => `+ ${d.data.more} till …`);
+    moreMerge.select('text').text((d) => I18n.t('more_siblings', { n: d.data.more }));
     moreMerge.select('title').remove();
-    moreMerge.append('title').text((d) => `Visa ${Math.min(PAGE * 2, d.data.more)} till av ${d.data.more} dolda syskon`);
+    moreMerge.append('title').text((d) => I18n.t('more_siblings_title', { k: Math.min(PAGE * 2, d.data.more), n: d.data.more }));
   }
 
   function currentNode(id) {
@@ -380,14 +388,14 @@
       }
       results.hidden = false;
       if (!hits.length) {
-        results.innerHTML = '<p class="cl-note">Inga träffar.</p>';
+        results.innerHTML = `<p class="cl-note">${I18n.t('no_hits')}</p>`;
         return;
       }
       results.innerHTML = hits
         .map((id) => {
           const r = rec(id);
           const p = r.parent_id ? rec(r.parent_id) : null;
-          const ctx = [Unified.genText(r), p && p.kind !== 'group' ? 'far ' + (p.hanzi || p.western || '') : (p ? 'koppling okänd' : '')]
+          const ctx = [Unified.genText(r), p && p.kind !== 'group' ? I18n.t('search_father', { name: p.hanzi || p.western || '' }) : (p ? I18n.t('search_link_unknown') : '')]
             .filter(Boolean)
             .join(' · ');
           return `<button class="cl-search-hit" data-goto="${Unified.esc(id)}"><span>${Unified.esc(Unified.displayName(r))}</span><span class="cl-count">${Unified.esc(ctx)}</span></button>`;
@@ -453,7 +461,7 @@
     const stats = document.getElementById('tree-stats');
     if (stats) {
       const persons = U.list.filter((r) => r.kind !== 'group').length;
-      stats.textContent = `${persons.toLocaleString('sv-SE')} personer`;
+      stats.textContent = I18n.dt(`${persons} personer`);
     }
 
     // djuplänk: #person=<id>
@@ -462,6 +470,15 @@
   }
 
   window.addEventListener('dataready', initTree);
+  // nytt språk: bygg om nodernas texter (de skapas bara när en nod dyker upp)
+  window.addEventListener('langchange', () => {
+    if (!built) return;
+    gTree.select('.nodes').selectAll('*').remove();
+    render({ instant: true });
+    const inp = document.getElementById('tree-search-input');
+    if (inp && inp.value.trim() && !document.getElementById('tree-search-results').hidden) inp.dispatchEvent(new Event('input'));
+  });
+
   window.addEventListener('viewchange', (e) => {
     if (e.detail === 'tree' && built && !hroot) render();
   });

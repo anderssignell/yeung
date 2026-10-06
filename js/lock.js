@@ -63,15 +63,22 @@ window.SiteLock = (function () {
       wrap.className = 'lock-screen';
       wrap.innerHTML = `
         <form class="lock-card" autocomplete="on">
-          <div class="lock-mark zh" aria-hidden="true">楊</div>
+          <div class="lock-top"><div class="lock-mark zh" aria-hidden="true">楊</div><div data-lang-slot></div></div>
           <h1>Beishan Yang</h1>
-          <p class="lock-lead">Familjens släktsajt är skyddad med lösenord. Fråga Anders om du behöver det.</p>
-          <label for="lock-password">Lösenord</label>
+          <p class="lock-lead" data-i18n="lock_lead"></p>
+          <label for="lock-password" data-i18n="lock_password"></label>
           <input id="lock-password" name="password" type="password" autocomplete="current-password" required autofocus>
-          <label class="lock-remember"><input id="lock-remember" type="checkbox" checked> Kom ihåg mig på den här enheten</label>
-          <button type="submit" id="lock-submit">Lås upp</button>
+          <label class="lock-remember"><input id="lock-remember" type="checkbox" checked> <span data-i18n="lock_remember"></span></label>
+          <button type="submit" id="lock-submit" data-i18n="lock_submit"></button>
           <p class="lock-error" id="lock-error" role="alert" hidden></p>
         </form>`;
+      wrap.querySelector('[data-lang-slot]').replaceWith(I18n.switcher());
+      I18n.apply(wrap);
+      const relabel = () => {
+        I18n.apply(wrap);
+        if (!err.hidden) err.textContent = I18n.t('lock_wrong');
+      };
+      window.addEventListener('langchange', relabel);
       document.body.appendChild(wrap);
       document.body.classList.add('is-locked');
       const form = wrap.querySelector('form');
@@ -83,12 +90,12 @@ window.SiteLock = (function () {
         e.preventDefault();
         err.hidden = true;
         btn.disabled = true;
-        btn.textContent = 'Låser upp …';
+        btn.textContent = I18n.t('lock_busy');
         const res = await keyFromPassword(input.value);
         btn.disabled = false;
-        btn.textContent = 'Lås upp';
+        btn.textContent = I18n.t('lock_submit');
         if (!res) {
-          err.textContent = 'Fel lösenord. Kontrollera stora och små bokstäver och försök igen.';
+          err.textContent = I18n.t('lock_wrong');
           err.hidden = false;
           input.select();
           return;
@@ -96,6 +103,7 @@ window.SiteLock = (function () {
         const remember = wrap.querySelector('#lock-remember').checked;
         const saved = toB64(res.raw);
         store(() => (remember ? localStorage : sessionStorage).setItem(STORE_KEY, saved));
+        window.removeEventListener('langchange', relabel);
         wrap.remove();
         document.body.classList.remove('is-locked');
         resolve(res.key);

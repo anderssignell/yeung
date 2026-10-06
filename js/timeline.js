@@ -7,7 +7,7 @@
       .map((item) => {
         const place = App.state.placesById[item.place_id];
         const placeBtn = place
-          ? `<button class="timeline-place-link" data-place="${item.place_id}">📍 ${place.name.split(' – ')[0]} — visa på karta</button>`
+          ? `<button class="timeline-place-link" data-place="${item.place_id}">📍 ${Unified.esc(I18n.dt(place.name).split(' – ')[0])} — ${I18n.t('tl_on_map')}</button>`
           : '';
         const people = (item.persons || [])
           .map((id) => {
@@ -15,14 +15,14 @@
             return r ? `<button class="timeline-person-link" data-person="${id}">${Unified.esc(Unified.displayName(r))}</button>` : '';
           })
           .join('');
-        const peopleHtml = people ? `<div class="timeline-people"><span class="timeline-people-label">I släktträdet:</span>${people}</div>` : '';
+        const peopleHtml = people ? `<div class="timeline-people"><span class="timeline-people-label">${I18n.t('tl_in_tree')}</span>${people}</div>` : '';
         return `
         <div class="timeline-item">
           <div class="timeline-card">
-            <div class="timeline-era">${item.era}</div>
-            <div class="timeline-year">${item.year}${item.approx ? '<span class="approx-tag">cirka</span>' : ''}</div>
-            <h3>${item.title}</h3>
-            <p>${item.text}</p>
+            <div class="timeline-era">${I18n.dt(item.era)}</div>
+            <div class="timeline-year">${item.year}${item.approx ? `<span class="approx-tag">${I18n.t('approx')}</span>` : ''}</div>
+            <h3>${I18n.dt(item.title)}</h3>
+            <p>${I18n.dt(item.text)}</p>
             ${peopleHtml}
             ${placeBtn}
           </div>
@@ -39,4 +39,5 @@
   }
 
   window.addEventListener('dataready', render);
+  window.addEventListener('langchange', () => App.state.timeline.length && render());
 })();

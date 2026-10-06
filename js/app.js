@@ -84,12 +84,13 @@ window.App = (function () {
   }
 
   async function boot() {
+    I18n.init(); // språkval (js/i18n.js)
     initTheme();
     initTabs();
     const drawerCtl = App.drawerCtl = initDrawer();
     await window.SiteLock.unlock(); // lösenord (js/lock.js)
     document.body.classList.remove('is-locked');
-    await loadData();
+    await Promise.all([loadData(), I18n.onUnlocked()]);
     const lockBtn = document.getElementById('lockNow');
     if (lockBtn && window.SiteLock.isEncrypted()) {
       lockBtn.hidden = false;

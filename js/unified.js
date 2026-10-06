@@ -2,25 +2,14 @@
 // personlistan (data/unified.json = family.json + clan.json, deduplicerad).
 // Används av både "Släktträd" (js/tree.js) och "Hela klanen" (js/clan.js).
 window.Unified = (function () {
-  const HEIR_LABELS = {
-    no_heir: 'Ingen arvinge (無嗣)',
-    adopted_out: 'Bortadopterad (出嗣)',
-    adopted_in: 'Adopterad in (嗣子)',
-  };
-  const CONF_LABELS = {
-    confirmed: 'Bekräftat i 1857 års tryckta bok',
-    direct: 'Direkt linje till mamma / er',
-    documented: 'Familjens egen dokumentation',
-    uncertain: 'Endast osäker handskriven lapp',
-    gap: 'Odokumenterat mellanled i källan',
-  };
-  const LINK_LABELS = {
-    reconstructed: 'Rekonstruerad koppling',
-    ambiguous: 'Osäker koppling – namnlikar',
-    gap: 'Koppling uppåt okänd',
-    family: 'Koppling enligt familjens dokument',
-  };
-  const BRANCH_LABELS = { eldest: 'Äldsta grenen (長房)', second: 'Andra grenen (次房)' };
+  const T = (k, v) => I18n.t(k, v);
+  const HEIR_KEYS = { no_heir: 'heir_no_heir', adopted_out: 'heir_adopted_out', adopted_in: 'heir_adopted_in' };
+  const CONF_KEYS = ['confirmed', 'direct', 'documented', 'uncertain', 'gap'];
+  const LINK_KEYS = ['reconstructed', 'ambiguous', 'gap', 'family'];
+  const confLabel = (c) => (CONF_KEYS.includes(c) ? T('conf_' + c) : '');
+  const linkLabel = (l) => (LINK_KEYS.includes(l) ? T('link_' + l) : '');
+  const branchLabel = (b) => (b === 'eldest' || b === 'second' ? T('branch_' + b) : '');
+  const relLabel = (r) => (['wife', 'daughter', 'abroad', 'mention'].includes(r) ? T('rel_' + r) : r);
   const BRANCH_SHORT = { eldest: '長房', second: '次房' };
 
   const idx = { byId: {}, kids: {}, size: {}, list: [], rootId: null, searchKeys: [] };
@@ -91,7 +80,8 @@ window.Unified = (function () {
 
   function displayName(r) {
     if (!r) return '';
-    if (r.kind === 'group') return r.pinyin;
+    if (r.kind === 'group') return I18n.dt(r.pinyin);
+    if (r.confidence === 'gap' && !r.hanzi) return [I18n.dt(r.western), I18n.dt(r.pinyin)].filter(Boolean).join(' · ');
     return [r.western, r.hanzi].filter(Boolean).join(' ') || r.pinyin || '—';
   }
 
@@ -119,9 +109,9 @@ window.Unified = (function () {
   }
 
   function genText(r) {
-    if (r.generation == null) return r.approx_year || '';
-    let t = 'Gen. ' + (r.generation_estimated ? '≈' : '') + r.generation;
-    if (r.approx_year) t += ' · ' + r.approx_year;
+    if (r.generation == null) return I18n.dt(r.approx_year) || '';
+    let t = T(r.generation_estimated ? 'gen_short_est' : 'gen_short', { g: r.generation });
+    if (r.approx_year) t += ' · ' + I18n.dt(r.approx_year);
     if (r.branch) t += ' · ' + BRANCH_SHORT[r.branch];
     return t;
   }
@@ -133,7 +123,8 @@ window.Unified = (function () {
     return vols
       .map((v, i) => {
         const p = pages[i];
-        return v.replace('vol', 'vol. ').replace(/ 0/, ' ') + (p != null ? ' s. ' + p : '');
+        const n = String(parseInt(v.replace('vol', ''), 10));
+        return p != null ? T('src_ref', { v: n, p }) : T('src_vol', { v: n });
       })
       .join(', ');
   }
@@ -152,7 +143,6 @@ window.Unified = (function () {
 
   // platser kopplade till personer (data/places_extended.json)
   let placesOf = null;
-  const REL_SV = { wife: 'hustru härifrån', daughter: 'dotter gift hit', abroad: 'reste/dog här', mention: 'nämns' };
   function personPlaces(id) {
     if (!placesOf) {
       placesOf = {};
@@ -185,6 +175,7 @@ window.Unified = (function () {
 
   function openDrawer(id, opts) {
     opts = opts || {};
+    lastDrawer = { id, opts };
     const r = idx.byId[id];
     if (!r) return;
     const content = document.getElementById('drawer-content');
@@ -199,7 +190,7 @@ window.Unified = (function () {
           .map((a, i) => {
             if (!a) return '<span class="cl-crumb-current">…</span>';
             const last = i === shown.length - 1;
-            const name = a.kind === 'group' ? a.pinyin : (a.hanzi || a.western || a.pinyin);
+            const name = a.kind === 'group' ? I18n.dt(a.pinyin) : a.hanzi || (a.confidence === 'gap' ? I18n.dt(a.western) : a.western) || a.pinyin;
             return last
               ? `<span class="cl-crumb-current">${esc(name)}</span>`
               : `<button class="cl-crumb" data-goto="${esc(a.id)}">${esc(name)}</button>`;
@@ -208,86 +199,89 @@ window.Unified = (function () {
     }
 
     if (r.kind === 'group') {
-      html += `<span class="d-badge confidence-gap">${CONF_LABELS.gap}</span>`;
-      html += `<p class="d-pinyin">${esc(r.id === 'grp_unplaced' ? 'Grenar utan fastställd koppling' : r.pinyin)}</p>`;
-      html += `<p class="d-western">${esc(r.western)} i ${esc(r.fragments)} grenar</p>`;
-      if (r.note) html += `<p class="d-note">${esc(r.note)}</p>`;
+      html += `<span class="d-badge confidence-gap">${confLabel('gap')}</span>`;
+      html += `<p class="d-pinyin">${esc(r.id === 'grp_unplaced' ? T('grp_unplaced_title') : I18n.dt(r.pinyin))}</p>`;
+      html += `<p class="d-western">${esc(T('grp_people_in', { people: I18n.dt(r.western), n: r.fragments }))}</p>`;
+      if (r.note) html += `<p class="d-note">${esc(I18n.dt(r.note))}</p>`;
     } else {
       const conf = r.confidence || 'documented';
-      if (r.highlight) html += `<span class="d-badge highlight">${r.highlight === 'mamma' ? 'Mamma' : 'Du'}</span> `;
-      html += `<span class="d-badge confidence-${esc(conf)}">${CONF_LABELS[conf] || ''}</span> `;
-      if (r.link && LINK_LABELS[r.link]) html += `<span class="d-badge link-${esc(r.link)}">${LINK_LABELS[r.link]}</span>`;
+      if (r.highlight) html += `<span class="d-badge highlight">${r.highlight === 'mamma' ? T('badge_mamma') : T('badge_you')}</span> `;
+      html += `<span class="d-badge confidence-${esc(conf)}">${confLabel(conf)}</span> `;
+      if (r.link && linkLabel(r.link)) html += `<span class="d-badge link-${esc(r.link)}">${linkLabel(r.link)}</span>`;
       if (r.hanzi) html += `<div class="d-hanzi zh">${esc(r.hanzi)}</div>`;
+      const gapNode = r.confidence === 'gap' && !r.hanzi;
       if (r.western) {
-        html += `<p class="d-pinyin">${esc(r.western)}${r.western_generated ? ' <span class="d-generated-tag">Jyutping, ej källbelagt</span>' : ''}</p>`;
+        html += `<p class="d-pinyin">${esc(gapNode ? I18n.dt(r.western) : r.western)}${r.western_generated ? ` <span class="d-generated-tag">${T('generated_tag')}</span>` : ''}</p>`;
       }
-      if (r.pinyin) html += `<p class="d-western">${esc(r.pinyin)} (Pinyin)</p>`;
+      if (r.pinyin) html += `<p class="d-western">${esc(gapNode ? I18n.dt(r.pinyin) : r.pinyin + ' (Pinyin)')}</p>`;
       if (r.generation != null) {
-        let g = 'Generation ' + (r.generation_estimated ? '≈' : '') + r.generation + ' av klanen';
-        if (r.approx_year) g += ' · ' + r.approx_year;
+        let g = T(r.generation_estimated ? 'gen_long_est' : 'gen_long', { g: r.generation });
+        if (r.approx_year) g += ' · ' + I18n.dt(r.approx_year);
         html += `<p class="d-generation">${esc(g)}</p>`;
       } else if (r.approx_year) {
-        html += `<p class="d-generation">${esc(r.approx_year)}</p>`;
+        html += `<p class="d-generation">${esc(I18n.dt(r.approx_year))}</p>`;
       }
-      if (r.years) html += `<p class="d-years">${esc(r.years)}</p>`;
-      if (r.private) html += `<p class="d-note d-caveat">Personen kan vara i livet. Årtal, partner och anteckningar visas därför inte offentligt.</p>`;
+      if (r.years) html += `<p class="d-years">${esc(I18n.dt(r.years))}</p>`;
+      if (r.private) html += `<p class="d-note d-caveat">${T('private_note')}</p>`;
 
       const badges = [];
-      if (r.branch) badges.push(`<span class="cl-badge">${BRANCH_LABELS[r.branch]}</span>`);
-      if (r.heir_status) badges.push(`<span class="cl-badge cl-badge-heir">${HEIR_LABELS[r.heir_status] || esc(r.heir_status)}</span>`);
+      if (r.branch) badges.push(`<span class="cl-badge">${branchLabel(r.branch)}</span>`);
+      if (r.heir_status) badges.push(`<span class="cl-badge cl-badge-heir">${HEIR_KEYS[r.heir_status] ? T(HEIR_KEYS[r.heir_status]) : esc(r.heir_status)}</span>`);
       if (badges.length) html += `<div class="cl-badges">${badges.join('')}</div>`;
 
       if (r.generation_estimated) {
-        html += `<p class="d-note d-caveat">Generationen är uppskattad utifrån generationstecknet (字輩) i namnet, eftersom grenen inte kunnat kopplas uppåt.</p>`;
+        html += `<p class="d-note d-caveat">${T('est_gen_note')}</p>`;
       } else if (r.gen_mismatch) {
-        html += `<p class="d-note d-caveat">Generationstecknet i namnet anger generation ${esc(r.generation)}, men trädet har ${r.gen_mismatch > 0 ? r.gen_mismatch + ' led för lite' : -r.gen_mismatch + ' led för mycket'} ovanför – ett mellanled saknas troligen i det extraherade materialet.</p>`;
+        const n = Math.abs(r.gen_mismatch);
+        const diff = T(r.gen_mismatch > 0 ? 'gen_too_few' : 'gen_too_many', { n });
+        html += `<p class="d-note d-caveat">${esc(T('gen_mismatch', { g: r.generation, diff }))}</p>`;
       }
       if (r.book_hanzi) {
-        html += `<div class="d-section-label">Namn i 1857 års bok</div><p class="d-note"><span class="zh">${esc(r.book_hanzi)}</span>${r.book_pinyin ? ' (' + esc(r.book_pinyin) + ')' : ''} – samma person, annan skrivning.</p>`;
+        html += `<div class="d-section-label">${T('sec_book_name')}</div><p class="d-note"><span class="zh">${esc(r.book_hanzi)}</span>${r.book_pinyin ? ' (' + esc(r.book_pinyin) + ')' : ''} ${T('same_person')}</p>`;
       }
       if (r.father_hanzi || r.father_pinyin) {
-        html += `<div class="d-section-label">Far enligt boken</div><p class="d-note">${esc([r.father_cantonese, r.father_hanzi, r.father_pinyin ? '(' + r.father_pinyin + ')' : ''].filter(Boolean).join(' '))}</p>`;
+        html += `<div class="d-section-label">${T('sec_father')}</div><p class="d-note">${esc([r.father_cantonese, r.father_hanzi, r.father_pinyin ? '(' + r.father_pinyin + ')' : ''].filter(Boolean).join(' '))}</p>`;
       }
-      if (r.birth_order_note) html += `<div class="d-section-label">Anteckning om börd</div><p class="d-note">${esc(r.birth_order_note)}</p>`;
+      if (r.birth_order_note) html += `<div class="d-section-label">${T('sec_birth_order')}</div><p class="d-note">${esc(r.birth_order_note)}</p>`;
       if (r.spouse) {
         const s = r.spouse;
-        html += `<div class="d-section-label">Gift med</div><p class="d-spouse">${[esc(s.western), s.hanzi ? `<span class="zh">${esc(s.hanzi)}</span>` : '', s.pinyin ? '(' + esc(s.pinyin) + ')' : '', s.years ? '(' + esc(s.years) + ')' : ''].filter(Boolean).join(' ')}</p>`;
+        html += `<div class="d-section-label">${T('sec_married')}</div><p class="d-spouse">${[esc(s.western), s.hanzi ? `<span class="zh">${esc(s.hanzi)}</span>` : '', s.pinyin ? '(' + esc(s.pinyin) + ')' : '', s.years ? '(' + esc(I18n.dt(s.years)) + ')' : ''].filter(Boolean).join(' ')}</p>`;
       }
       if (r.spouse2) {
         const s = r.spouse2;
-        html += `<div class="d-section-label">Även gift med</div><p class="d-spouse">${[esc(s.western), s.hanzi ? `<span class="zh">${esc(s.hanzi)}</span>` : '', s.pinyin ? '(' + esc(s.pinyin) + ')' : ''].filter(Boolean).join(' ')}</p>`;
+        html += `<div class="d-section-label">${T('sec_also_married')}</div><p class="d-spouse">${[esc(s.western), s.hanzi ? `<span class="zh">${esc(s.hanzi)}</span>` : '', s.pinyin ? '(' + esc(s.pinyin) + ')' : ''].filter(Boolean).join(' ')}</p>`;
       }
       if (r.spouses && r.spouses.length) {
-        html += `<div class="d-section-label">Maka/makor enligt boken</div><p class="d-note">${spouseList(r.spouses)}</p>`;
+        html += `<div class="d-section-label">${T('sec_spouses')}</div><p class="d-note">${spouseList(r.spouses)}</p>`;
       }
-      if (r.note) html += `<div class="d-section-label">Anteckning</div><p class="d-note">${esc(r.note)}</p>`;
-      if (r.notes) html += `<div class="d-section-label">Källanteckning</div><p class="d-note">${esc(r.notes)}</p>`;
+      if (r.note) html += `<div class="d-section-label">${T('sec_note')}</div><p class="d-note">${esc(I18n.dt(r.note))}</p>`;
+      if (r.notes) html += `<div class="d-section-label">${T('sec_source_note')}</div><p class="d-note">${esc(r.notes)}</p>`;
       const src = sourceText(r.source_volumes, r.source_pages);
-      if (src) html += `<div class="d-section-label">Källa</div><p class="d-note">七修北山楊氏族譜 (1857), ${esc(src)}</p>`;
+      if (src) html += `<div class="d-section-label">${T('sec_source')}</div><p class="d-note">七修北山楊氏族譜 (1857), ${esc(src)}</p>`;
       const pls = personPlaces(id);
       if (pls.length) {
-        html += `<div class="d-section-label">Platser i källan</div><div class="d-places">` +
+        html += `<div class="d-section-label">${T('sec_places')}</div><div class="d-places">` +
           pls
             .map(
               (x) =>
-                `<button class="d-place" data-place="${esc(x.place.id)}" title="${esc(x.snippet || '')}"><strong>${esc(x.place.name.split(' – ')[0])}</strong> · ${esc(REL_SV[x.rel] || x.rel)}</button>` +
-                (x.snippet ? `<p class="d-note d-place-quote">”${esc(x.snippet)}” <span class="d-alias-reason">(${esc(x.vol.replace('vol0', 'vol. ').replace('vol1', 'vol. 1'))} s. ${esc(x.page)})</span></p>` : '')
+                `<button class="d-place" data-place="${esc(x.place.id)}" title="${esc(x.snippet || '')}"><strong>${esc(I18n.dt(x.place.name).split(' – ')[0])}</strong> · ${esc(relLabel(x.rel))}</button>` +
+                (x.snippet ? `<p class="d-note d-place-quote">”${esc(x.snippet)}” <span class="d-alias-reason">(${esc(sourceText([x.vol], [x.page]))})</span></p>` : '')
             )
             .join('') +
           '</div>';
       }
       if (r.link_note) {
-        html += `<div class="d-section-label">Om kopplingen till föräldern</div><p class="d-note">${esc(r.link_note)}</p>`;
+        html += `<div class="d-section-label">${T('sec_link')}</div><p class="d-note">${esc(I18n.dt(r.link_note))}</p>`;
       }
       if (r.aliases && r.aliases.length) {
-        html += `<div class="d-section-label">Förekommer även som (sammanslagna poster)</div>`;
+        html += `<div class="d-section-label">${T('sec_aliases')}</div>`;
         html += r.aliases
           .map(
             (a) =>
               `<p class="d-note"><strong class="zh">${esc(a.hanzi || '')}</strong> ${esc(a.pinyin || '')} · ${esc(sourceText(a.source_volumes, a.source_pages))}` +
               (a.notes ? `<br><em>${esc(a.notes)}</em>` : '') +
-              (a.spouses && a.spouses.length ? `<br>Maka/makor: ${spouseList(a.spouses)}` : '') +
-              `<br><span class="d-alias-reason">${esc(a.reason || '')}</span></p>`
+              (a.spouses && a.spouses.length ? `<br>${T('alias_spouses')} ${spouseList(a.spouses)}` : '') +
+              `<br><span class="d-alias-reason">${esc(I18n.dt(a.reason || ''))}</span></p>`
           )
           .join('');
       }
@@ -296,30 +290,30 @@ window.Unified = (function () {
     // barn
     const kids = idx.kids[id] || [];
     if (kids.length) {
-      html += `<div class="d-section-label">${r.kind === 'group' ? 'Innehåll' : 'Barn'} (${kids.length})</div><div class="cl-children">`;
+      html += `<div class="d-section-label">${r.kind === 'group' ? T('sec_contents') : T('sec_children')} (${I18n.num(kids.length)})</div><div class="cl-children">`;
       html += kids
         .slice(0, 200)
         .map((k) => {
           const c = idx.byId[k];
           const n = idx.size[k] - 1;
-          return `<button class="cl-child-row" data-goto="${esc(k)}"><span class="cl-child-name">${esc(displayName(c))}</span>${n > 0 ? `<span class="cl-count">${n} ${n === 1 ? 'ättling' : 'ättlingar'}</span>` : ''}</button>`;
+          return `<button class="cl-child-row" data-goto="${esc(k)}"><span class="cl-child-name">${esc(displayName(c))}</span>${n > 0 ? `<span class="cl-count">${T('descendants', { n })}</span>` : ''}</button>`;
         })
         .join('');
-      if (kids.length > 200) html += `<p class="cl-note">… och ${kids.length - 200} till.</p>`;
+      if (kids.length > 200) html += `<p class="cl-note">${T('and_more', { n: kids.length - 200 })}</p>`;
       html += '</div>';
     } else if (isPerson(r)) {
-      html += `<p class="cl-note">Inga barn dokumenterade i materialet för denna person.</p>`;
+      html += `<p class="cl-note">${T('no_children')}</p>`;
     }
 
     // åtgärder
     const actions = [];
-    if (opts.from !== 'tree') actions.push(`<button class="d-action" data-act="reveal">Visa i släktträdet</button>`);
+    if (opts.from !== 'tree') actions.push(`<button class="d-action" data-act="reveal">${T('show_in_tree')}</button>`);
     const desc = idx.size[id] - 1;
     if (desc > 0 && opts.from === 'tree') {
       actions.push(
         desc <= 400
-          ? `<button class="d-action" data-act="expand">Fäll ut alla ${desc} ättlingar</button>`
-          : `<button class="d-action" data-act="expand">Fäll ut tre generationer</button>`
+          ? `<button class="d-action" data-act="expand">${T('expand_desc', { n: desc })}</button>`
+          : `<button class="d-action" data-act="expand">${T('expand_three')}</button>`
       );
     }
     if (actions.length) html += `<div class="d-actions">${actions.join('')}</div>`;
@@ -351,6 +345,16 @@ window.Unified = (function () {
       });
     });
   }
+
+  // nytt språk: rita om panelen om den är öppen
+  let lastDrawer = null;
+  window.addEventListener('langchange', () => {
+    if (lastDrawer && document.getElementById('detail-drawer').classList.contains('is-open')) {
+      const keep = document.getElementById('detail-drawer').scrollTop;
+      openDrawer(lastDrawer.id, lastDrawer.opts);
+      document.getElementById('detail-drawer').scrollTop = keep;
+    }
+  });
 
   function closeDrawer() {
     document.getElementById('detail-drawer').classList.remove('is-open');
