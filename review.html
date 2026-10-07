@@ -6,8 +6,8 @@
 <title>Granska bidrag — Beishan Yang</title>
 <meta name="robots" content="noindex, nofollow" />
 <meta name="description" content="Granskning av bidrag från släkten. Allt dekrypteras i webbläsaren." />
-<link rel="stylesheet" href="css/fonts.css?v=1791311260" />
-<link rel="stylesheet" href="css/styles.css?v=1791311260" />
+<link rel="stylesheet" href="css/fonts.css?v=1791361263" />
+<link rel="stylesheet" href="css/styles.css?v=1791361263" />
 <style>
   body { min-height: 100vh; }
   .rv-wrap { max-width: 920px; margin: 0 auto; padding: var(--space-6) 16px var(--space-16); }
@@ -39,6 +39,7 @@
   .rv-actions .rv-btn[data-set="rejected"] { border-color: var(--color-warning); color: var(--color-warning); font-weight: 600; }
   .rv-actions .rv-btn[data-set="pending"] { border-color: var(--color-gold); font-weight: 600; }
   .rv-err { color: var(--color-warning); }
+  .rv-back { margin-top: var(--space-4); font-size: var(--text-sm); color: var(--color-primary); text-align: center; }
   .rv-saved { font-size: var(--text-xs); color: var(--color-text-muted); align-self: center; }
 </style>
 </head>
@@ -52,6 +53,7 @@
     <input id="rv-pass" type="password" autocomplete="current-password" required autofocus>
     <button type="submit" id="rv-submit">Lås upp</button>
     <p class="lock-error" id="rv-error" role="alert" hidden></p>
+    <a class="rv-back" href="index.html">← Till släktsajten</a>
   </form>
 </div>
 
@@ -68,15 +70,15 @@
       </select>
       <button class="rv-btn" id="rv-reload">Uppdatera</button>
       <button class="rv-btn primary" id="rv-export">Exportera godkända</button>
-      <a class="rv-btn" href="index.html">Till sajten</a>
+      <a class="rv-btn" href="index.html">← Till släktsajten</a>
     </div>
   </div>
   <p class="rv-status-line" id="rv-status"></p>
   <div id="rv-list"></div>
 </div>
 
-<script>window.SITE_VERSION = "1791311260";</script>
-<script src="js/sealbox.js?v=1791311260"></script>
-<script src="js/review.js?v=1791311260"></script>
+<script>window.SITE_VERSION = "1791361263";</script>
+<script src="js/sealbox.js?v=1791361263"></script>
+<script src="js/review.js?v=1791361263"></script>
 </body>
 </html>

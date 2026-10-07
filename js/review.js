@@ -276,6 +276,11 @@
         err.hidden = false;
         return;
       }
+      try {
+        localStorage.setItem('yeung-admin', '1'); // visar "Granska bidrag" på huvudsajten på den här enheten
+      } catch (ex) {
+        /* privat läge e.d. – knappen visas då inte */
+      }
       $('rv-lock').remove();
       $('rv-main').hidden = false;
       await load();

@@ -751,3 +751,16 @@ body.cf-open { overflow: hidden; }
 .ff-lightbox { position: fixed; inset: 0; z-index: 400; background: rgba(0, 0, 0, 0.85); display: flex; align-items: center; justify-content: center; padding: 16px; cursor: zoom-out; }
 .ff-lightbox img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 4px; }
 .ff-lightbox .drawer-close { position: absolute; top: 12px; right: 12px; background: rgba(255,255,255,.9); }
+
+/* Administratör: "Granska bidrag" i sidhuvudet (bara på Anders enheter) och länk i sidfoten */
+.review-btn {
+  flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 var(--space-3);
+  border: 1px solid var(--color-border); border-radius: 999px; background: var(--color-surface-2);
+  color: var(--color-text-muted); font-size: var(--text-xs); font-weight: 600; text-decoration: none;
+}
+.review-btn:hover { color: var(--color-primary); border-color: var(--color-primary); }
+.review-btn[hidden] { display: none; }
+@media (max-width: 640px) { .review-btn { height: 30px; } .review-btn span { display: none; } }
+.site-footer { text-align: center; padding: 4px 16px; border-top: 1px solid var(--color-border); line-height: 1.4; }
+.footer-admin { font-size: var(--text-xs); color: var(--color-text-faint); text-decoration: none; }
+.footer-admin:hover { color: var(--color-text-muted); text-decoration: underline; }

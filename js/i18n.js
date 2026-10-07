@@ -35,6 +35,9 @@ window.I18n = (function () {
       tab_clan: 'Hela klanen',
       lock_now: 'Lås sajten',
       lock_now_title: 'Lås sajten (glöm lösenordet på den här enheten)',
+      admin_review: 'Granska bidrag',
+      admin_review_title: 'Öppna granskningssidan för bidrag från släkten',
+      admin_footer: 'Administratör',
       theme: 'Byt färgtema',
       close: 'Stäng',
 
@@ -237,6 +240,9 @@ window.I18n = (function () {
       tab_clan: 'The whole clan',
       lock_now: 'Lock the site',
       lock_now_title: 'Lock the site (forget the password on this device)',
+      admin_review: 'Review contributions',
+      admin_review_title: 'Open the review page for contributions from the family',
+      admin_footer: 'Administrator',
       theme: 'Switch colour theme',
       close: 'Close',
 
@@ -439,6 +445,9 @@ window.I18n = (function () {
       tab_clan: '全族',
       lock_now: '鎖上網站',
       lock_now_title: '鎖上網站（在此裝置上忘記密碼）',
+      admin_review: '審閱資料',
+      admin_review_title: '打開審閱家族提供資料的頁面',
+      admin_footer: '管理員',
       theme: '切換顏色主題',
       close: '關閉',
 

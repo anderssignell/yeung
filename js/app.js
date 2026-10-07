@@ -87,8 +87,21 @@ window.App = (function () {
     return { close };
   }
 
+  // "Granska bidrag" visas bara på enheter där granskningssidan har låsts upp (review.js sätter flaggan).
+  function initAdminLink() {
+    let admin = false;
+    try {
+      admin = !!localStorage.getItem('yeung-admin');
+    } catch (e) {
+      admin = false;
+    }
+    const link = document.getElementById('reviewLink');
+    if (link) link.hidden = !admin;
+  }
+
   async function boot() {
     I18n.init(); // språkval (js/i18n.js)
+    initAdminLink();
     initTheme();
     initTabs();
     const drawerCtl = App.drawerCtl = initDrawer();
