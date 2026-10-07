@@ -317,6 +317,8 @@ window.Unified = (function () {
       );
     }
     if (actions.length) html += `<div class="d-actions">${actions.join('')}</div>`;
+    // berättelser om personen (js/stories.js)
+    if (window.Stories && isPerson(r)) html += Stories.drawerHtml(id);
     // bidrag från släkten + "Föreslå ändring" (js/contribute.js)
     if (window.Contribute && isPerson(r)) html += Contribute.drawerHtml(r);
 
@@ -334,6 +336,12 @@ window.Unified = (function () {
       });
     });
     content.querySelectorAll('[data-place]').forEach((btn) => btn.addEventListener('click', () => showPlace(btn.dataset.place)));
+    content.querySelectorAll('[data-story]').forEach((btn) =>
+      btn.addEventListener('click', () => {
+        closeDrawer();
+        Stories.show(btn.dataset.story);
+      })
+    );
     if (window.Contribute) Contribute.hydrate(content);
     content.querySelectorAll('[data-act]').forEach((btn) => {
       btn.addEventListener('click', () => {

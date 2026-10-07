@@ -12,7 +12,7 @@ window.App = (function () {
 
   async function loadData() {
     const get = (name) => window.SiteLock.fetchJSON(name);
-    const [unified, timeline, places, customs, placesExt, contributions, config] = await Promise.all([
+    const [unified, timeline, places, customs, placesExt, contributions, config, stories] = await Promise.all([
       get('unified.json'),
       get('timeline.json'),
       get('places.json'),
@@ -20,7 +20,9 @@ window.App = (function () {
       get('places_extended.json').catch(() => ({ places: [] })),
       get('contributions.json').catch(() => ({ items: [] })), // godkända bidrag (tools/import_contributions.py)
       get('config.json').catch(() => null), // bidragsmottagaren (build_public.py)
+      get('stories.json').catch(() => ({ themes: [], stories: [] })), // berättelser ur släktboken
     ]);
+    state.stories = stories;
     state.contributions = contributions;
     state.config = config;
     state.placesExt = placesExt; // grannbyar + utvandring ur släktboken (data/extract_places.py)
@@ -52,6 +54,7 @@ window.App = (function () {
     const panels = {
       tree: document.getElementById('view-tree'),
       timeline: document.getElementById('view-timeline'),
+      stories: document.getElementById('view-stories'),
       map: document.getElementById('view-map'),
       customs: document.getElementById('view-customs'),
       clan: document.getElementById('view-clan'),

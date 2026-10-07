@@ -7,9 +7,9 @@
 <meta name="robots" content="noindex, nofollow" />
 <meta name="description" content="Interaktivt släktträd, tidslinje och karta för Beishan Yang-klanens släktbok och familjens egen historia fram till idag." />
 
-<link rel="stylesheet" href="css/fonts.css?v=1791366965" />
-<link rel="stylesheet" href="vendor/maplibre-gl/maplibre-gl.css?v=1791366965" />
-<link rel="stylesheet" href="css/styles.css?v=1791366965" />
+<link rel="stylesheet" href="css/fonts.css?v=1791369255" />
+<link rel="stylesheet" href="vendor/maplibre-gl/maplibre-gl.css?v=1791369255" />
+<link rel="stylesheet" href="css/styles.css?v=1791369255" />
 </head>
 <body class="is-locked">
 
@@ -29,13 +29,14 @@
     <div class="brand-text">
       <span class="brand-title">Beishan Yang <span class="zh">楊</span></span>
       <span class="brand-sub" data-i18n="brand_sub">Familjens resa genom åtta hundra år</span>
-      <span class="brand-updated" id="last-updated" data-published="2026-10-07T11:56:05.690726+02:00">Senast uppdaterad: 7 oktober 2026, kl. 11:56</span>
+      <span class="brand-updated" id="last-updated" data-published="2026-10-07T12:34:15.017589+02:00">Senast uppdaterad: 7 oktober 2026, kl. 12:34</span>
     </div>
   </div>
 
   <nav class="view-tabs" role="tablist" data-i18n-attr="aria-label:views" aria-label="Visningar">
     <button class="tab-btn is-active" data-view="tree" role="tab" aria-selected="true" data-i18n="tab_tree">Släktträd</button>
     <button class="tab-btn" data-view="timeline" role="tab" aria-selected="false" data-i18n="tab_timeline">Tidslinje</button>
+    <button class="tab-btn" data-view="stories" role="tab" aria-selected="false" data-i18n="tab_stories">Berättelser</button>
     <button class="tab-btn" data-view="map" role="tab" aria-selected="false" data-i18n="tab_map">Karta</button>
     <button class="tab-btn" data-view="customs" role="tab" aria-selected="false" data-i18n="tab_customs">Seder &amp; regler</button>
     <button class="tab-btn" data-view="clan" role="tab" aria-selected="false" data-i18n="tab_clan">Hela klanen</button>
@@ -121,6 +122,19 @@
     </div>
   </section>
 
+  <!-- STORIES VIEW -->
+  <section class="view" id="view-stories" data-view-panel="stories" hidden>
+    <div class="stories-scroll" id="stories-scroll">
+      <div class="stories-intro">
+        <h1 data-i18n="st_heading">Berättelser ur släktboken</h1>
+        <p data-i18n="st_intro"></p>
+      </div>
+      <nav class="stories-themes" id="stories-themes" data-i18n-attr="aria-label:st_themes"></nav>
+      <div class="stories-list" id="stories-list"></div>
+      <p class="customs-source stories-footnote" data-i18n="st_footnote"></p>
+    </div>
+  </section>
+
   <!-- MAP VIEW -->
   <section class="view" id="view-map" data-view-panel="map" hidden>
     <div id="map"></div>
@@ -171,20 +185,21 @@
 </aside>
 <div class="drawer-scrim" id="drawerScrim"></div>
 
-<script src="vendor/maplibre-gl/maplibre-gl.js?v=1791366965"></script>
-<script src="vendor/d3/d3.min.js?v=1791366965"></script>
-<script src="vendor/topojson-client/topojson-client.min.js?v=1791366965"></script>
-<script>window.SITE_VERSION = "1791366965";</script>
-<script src="js/i18n.js?v=1791366965"></script>
-<script src="js/sealbox.js?v=1791366965"></script>
-<script src="js/lock.js?v=1791366965"></script>
-<script src="js/app.js?v=1791366965"></script>
-<script src="js/unified.js?v=1791366965"></script>
-<script src="js/tree.js?v=1791366965"></script>
-<script src="js/timeline.js?v=1791366965"></script>
-<script src="js/map.js?v=1791366965"></script>
-<script src="js/customs.js?v=1791366965"></script>
-<script src="js/contribute.js?v=1791366965"></script>
-<script src="js/clan.js?v=1791366965"></script>
+<script src="vendor/maplibre-gl/maplibre-gl.js?v=1791369255"></script>
+<script src="vendor/d3/d3.min.js?v=1791369255"></script>
+<script src="vendor/topojson-client/topojson-client.min.js?v=1791369255"></script>
+<script>window.SITE_VERSION = "1791369255";</script>
+<script src="js/i18n.js?v=1791369255"></script>
+<script src="js/sealbox.js?v=1791369255"></script>
+<script src="js/lock.js?v=1791369255"></script>
+<script src="js/app.js?v=1791369255"></script>
+<script src="js/unified.js?v=1791369255"></script>
+<script src="js/tree.js?v=1791369255"></script>
+<script src="js/timeline.js?v=1791369255"></script>
+<script src="js/stories.js?v=1791369255"></script>
+<script src="js/map.js?v=1791369255"></script>
+<script src="js/customs.js?v=1791369255"></script>
+<script src="js/contribute.js?v=1791369255"></script>
+<script src="js/clan.js?v=1791369255"></script>
 </body>
 </html>

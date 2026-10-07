@@ -94,6 +94,30 @@
       endYear: it.ongoing ? NOW : it.end,
       from: it.draw_from || it.year,
     }));
+    // berättelser med årtal (data/stories.json) läggs in i sina spår
+    const st = App.state.stories || { themes: [], stories: [] };
+    const themeTitle = {};
+    st.themes.forEach((t) => (themeTitle[t.id] = t.title));
+    st.stories
+      .filter((x) => x.timeline && x.year != null)
+      .forEach((x) =>
+        S.items.push({
+          id: 'story_' + x.id,
+          story: x.id,
+          track: x.timeline,
+          year: x.year,
+          end: x.end,
+          endYear: x.end,
+          from: x.year,
+          approx: x.approx,
+          era: themeTitle[x.theme] || '',
+          title: x.title,
+          text: x.text,
+          persons: x.persons,
+          place_id: x.place_id,
+          sources: x.sources,
+        })
+      );
     // Generationer ur släktträdet (uppskattade år)
     const counts = {};
     (App.state.unified || []).forEach((r) => {
@@ -399,8 +423,10 @@
         .join('');
       if (people) html += `<div class="timeline-people"><span class="timeline-people-label">${esc(T('tl_in_tree'))}</span>${people}</div>`;
       if (it.general) html += `<p class="tl-card-note">${esc(T('tl_general'))}</p>`;
+      if (it.sources) html += `<p class="tl-card-note">${esc(T('st_source', { refs: it.sources.map((x) => T('st_vol', { vol: String(x.vol), pages: String(x.pages) })).join('; ') }))}</p>`;
       if (/†/.test(D(it.text) + D(it.title))) html += `<p class="tl-card-note">${esc(T('tl_namenote'))}</p>`;
       html += `<div class="tl-card-actions"><button type="button" class="tl-zoomto">${esc(T('tl_zoom_to'))}</button>`;
+      if (it.story) html += `<button type="button" class="tl-zoomto tl-story-link" data-story="${esc(it.story)}">📖 ${esc(T('st_read'))}</button>`;
       if (place) html += `<button class="timeline-place-link" data-place="${esc(it.place_id)}">📍 ${esc(D(place.name).split(' – ')[0])} — ${esc(T('tl_on_map'))}</button>`;
       html += `</div>`;
       card.dataset.from = it.from;
@@ -418,6 +444,7 @@
     });
     card.querySelectorAll('[data-person]').forEach((b) => b.addEventListener('click', () => Unified.showPerson(b.dataset.person)));
     card.querySelectorAll('[data-place]').forEach((b) => b.addEventListener('click', () => Unified.showPlace(b.dataset.place)));
+    card.querySelectorAll('[data-story]').forEach((b) => b.addEventListener('click', () => Stories.show(b.dataset.story)));
     schedule();
   }
   function closeCard() {
@@ -689,7 +716,23 @@
     schedule(true);
   }
 
-  window.Timeline = { zoomTo, openCard, state: S };
+  // Zooma till en händelse och öppna dess kort (t.ex. från Berättelser).
+  function focus(id) {
+    if (S.mode !== 'chart') setMode('chart');
+    const it = findItem(id);
+    if (!it) return;
+    S.hidden.delete(it.track);
+    renderLaneToggles();
+    const a = it.from;
+    const b = it.endYear != null ? it.endYear : it.year;
+    if (b - a < 10) zoomTo(a - 25, b + 25);
+    else zoomTo(a, b);
+    dirtyLayout = true;
+    openCard(id);
+    revealSelected();
+  }
+
+  window.Timeline = { zoomTo, openCard, focus, state: S };
   window.addEventListener('dataready', render);
   window.addEventListener('langchange', () => App.state.timeline.length && render());
 })();
