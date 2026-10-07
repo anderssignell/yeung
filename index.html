@@ -7,9 +7,9 @@
 <meta name="robots" content="noindex, nofollow" />
 <meta name="description" content="Interaktivt släktträd, tidslinje och karta för Beishan Yang-klanens släktbok och familjens egen historia fram till idag." />
 
-<link rel="stylesheet" href="css/fonts.css?v=1791362670" />
-<link rel="stylesheet" href="vendor/maplibre-gl/maplibre-gl.css?v=1791362670" />
-<link rel="stylesheet" href="css/styles.css?v=1791362670" />
+<link rel="stylesheet" href="css/fonts.css?v=1791366965" />
+<link rel="stylesheet" href="vendor/maplibre-gl/maplibre-gl.css?v=1791366965" />
+<link rel="stylesheet" href="css/styles.css?v=1791366965" />
 </head>
 <body class="is-locked">
 
@@ -29,7 +29,7 @@
     <div class="brand-text">
       <span class="brand-title">Beishan Yang <span class="zh">楊</span></span>
       <span class="brand-sub" data-i18n="brand_sub">Familjens resa genom åtta hundra år</span>
-      <span class="brand-updated" id="last-updated" data-published="2026-10-07T10:44:30.830505+02:00">Senast uppdaterad: 7 oktober 2026, kl. 10:44</span>
+      <span class="brand-updated" id="last-updated" data-published="2026-10-07T11:56:05.690726+02:00">Senast uppdaterad: 7 oktober 2026, kl. 11:56</span>
     </div>
   </div>
 
@@ -92,12 +92,33 @@
 
   <!-- TIMELINE VIEW -->
   <section class="view" id="view-timeline" data-view-panel="timeline" hidden>
-    <div class="timeline-intro">
-      <h1 data-i18n="tl_heading">Åtta hundra år, i korthet</h1>
-      <p data-i18n="tl_intro">Från stamfaderns flytt från Nánxióng 1237, genom Qing-dynastins kustförbud, till den tryckta släktboken 1857 och familjens egen resa till Hongkong och Sverige.</p>
+    <div class="tl-toolbar">
+      <div class="tl-heading">
+        <h1 data-i18n="tl_heading">Åtta hundra år, i korthet</h1>
+        <p data-i18n="tl_intro"></p>
+      </div>
+      <div class="tl-controls">
+        <div class="tl-mode" role="group" data-i18n-attr="aria-label:tl_mode_label">
+          <button type="button" data-tl-mode="chart" class="is-active" data-i18n="tl_mode_chart">Översikt</button>
+          <button type="button" data-tl-mode="list" data-i18n="tl_mode_list">Lista</button>
+        </div>
+        <div class="tl-zoom" data-tl-chart-only>
+          <button type="button" id="tlZoomOut" data-i18n-attr="title:tl_zoom_out,aria-label:tl_zoom_out">−</button>
+          <button type="button" id="tlZoomIn" data-i18n-attr="title:tl_zoom_in,aria-label:tl_zoom_in">+</button>
+          <button type="button" id="tlReset" data-i18n="tl_reset">Hela tiden</button>
+        </div>
+      </div>
+      <div class="tl-lanes" id="tl-lane-toggles" data-tl-chart-only role="group" data-i18n-attr="aria-label:tl_lanes_label"></div>
     </div>
-    <div class="timeline-track" id="timeline-track"></div>
-    <p class="customs-source timeline-namenote" data-i18n="tl_namenote">Personnamn anges med kantonesiskt uttal. † = namnet är genererat från tecknen (Jyutping) och inte källbelagt i familjens egna dokument.</p>
+    <div class="tl-stage" id="tl-stage" tabindex="0" data-i18n-attr="aria-label:tl_aria">
+      <svg id="tl-svg" aria-hidden="true"></svg>
+      <div class="tl-hint" id="tl-hint"></div>
+      <aside class="tl-card" id="tl-card" hidden></aside>
+    </div>
+    <div class="tl-list" id="tl-list" hidden>
+      <div class="timeline-track" id="timeline-track"></div>
+      <p class="customs-source timeline-namenote" data-i18n="tl_namenote">Personnamn anges med kantonesiskt uttal. † = namnet är genererat från tecknen (Jyutping) och inte källbelagt i familjens egna dokument.</p>
+    </div>
   </section>
 
   <!-- MAP VIEW -->
@@ -150,20 +171,20 @@
 </aside>
 <div class="drawer-scrim" id="drawerScrim"></div>
 
-<script src="vendor/maplibre-gl/maplibre-gl.js?v=1791362670"></script>
-<script src="vendor/d3/d3.min.js?v=1791362670"></script>
-<script src="vendor/topojson-client/topojson-client.min.js?v=1791362670"></script>
-<script>window.SITE_VERSION = "1791362670";</script>
-<script src="js/i18n.js?v=1791362670"></script>
-<script src="js/sealbox.js?v=1791362670"></script>
-<script src="js/lock.js?v=1791362670"></script>
-<script src="js/app.js?v=1791362670"></script>
-<script src="js/unified.js?v=1791362670"></script>
-<script src="js/tree.js?v=1791362670"></script>
-<script src="js/timeline.js?v=1791362670"></script>
-<script src="js/map.js?v=1791362670"></script>
-<script src="js/customs.js?v=1791362670"></script>
-<script src="js/contribute.js?v=1791362670"></script>
-<script src="js/clan.js?v=1791362670"></script>
+<script src="vendor/maplibre-gl/maplibre-gl.js?v=1791366965"></script>
+<script src="vendor/d3/d3.min.js?v=1791366965"></script>
+<script src="vendor/topojson-client/topojson-client.min.js?v=1791366965"></script>
+<script>window.SITE_VERSION = "1791366965";</script>
+<script src="js/i18n.js?v=1791366965"></script>
+<script src="js/sealbox.js?v=1791366965"></script>
+<script src="js/lock.js?v=1791366965"></script>
+<script src="js/app.js?v=1791366965"></script>
+<script src="js/unified.js?v=1791366965"></script>
+<script src="js/tree.js?v=1791366965"></script>
+<script src="js/timeline.js?v=1791366965"></script>
+<script src="js/map.js?v=1791366965"></script>
+<script src="js/customs.js?v=1791366965"></script>
+<script src="js/contribute.js?v=1791366965"></script>
+<script src="js/clan.js?v=1791366965"></script>
 </body>
 </html>
