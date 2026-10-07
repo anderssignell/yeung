@@ -249,7 +249,7 @@ window.Unified = (function () {
       }
       if (r.spouse2) {
         const s = r.spouse2;
-        html += `<div class="d-section-label">${T('sec_also_married')}</div><p class="d-spouse">${[esc(s.western), s.hanzi ? `<span class="zh">${esc(s.hanzi)}</span>` : '', s.pinyin ? '(' + esc(s.pinyin) + ')' : ''].filter(Boolean).join(' ')}</p>`;
+        html += `<div class="d-section-label">${T('sec_also_married')}</div><p class="d-spouse">${[esc(s.western), s.hanzi ? `<span class="zh">${esc(s.hanzi)}</span>` : '', s.pinyin ? '(' + esc(s.pinyin) + ')' : '', s.years ? '(' + esc(I18n.dt(s.years)) + ')' : ''].filter(Boolean).join(' ')}</p>`;
       }
       if (r.spouses && r.spouses.length) {
         html += `<div class="d-section-label">${T('sec_spouses')}</div><p class="d-note">${spouseList(r.spouses)}</p>`;
