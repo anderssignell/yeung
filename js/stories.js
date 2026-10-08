@@ -13,9 +13,13 @@ window.Stories = (function () {
     return y;
   }
   function sourceLine(st) {
-    const refs = (st.sources || []).map((s) => T('st_vol', { vol: String(s.vol), pages: String(s.pages) })).join('; ');
-    return refs ? T('st_source', { refs }) : '';
+    // "volym 5, s. 4–5" länkar till första sidan i originalet hos Harvard
+    const refs = (st.sources || [])
+      .map((s) => App.refLink(T('st_vol', { vol: String(s.vol), pages: String(s.pages) }), s.vol, String(s.pages).match(/\d+/)[0]))
+      .join('; ');
+    return refs ? esc(T('st_source', { refs: '\u0000' })).replace('\u0000', refs) : '';
   }
+
   function themeTitle(id) {
     const th = S.data.themes.find((t) => t.id === id);
     return th ? D(th.title) : '';
@@ -45,7 +49,7 @@ window.Stories = (function () {
           ${st.timeline && st.year != null ? `<button type="button" class="tl-zoomto" data-tl="${esc(st.id)}">${esc(T('st_on_timeline'))}</button>` : ''}
           ${place ? `<button class="timeline-place-link" data-place="${esc(st.place_id)}">📍 ${esc(D(place.name).split(' – ')[0])} — ${esc(T('tl_on_map'))}</button>` : ''}
         </div>
-        <p class="story-source">${esc(sourceLine(st))} ${App.bookLink()}</p>
+        <p class="story-source">${sourceLine(st)}</p>
       </article>`;
   }
 

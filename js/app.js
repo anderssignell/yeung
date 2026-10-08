@@ -131,5 +131,24 @@ window.App = (function () {
     return `<a class="book-link${cls ? ' ' + cls : ''}" href="${esc(b.url)}" target="_blank" rel="noopener">${esc(I18n.t('book_original'))} ↗</a>`;
   }
 
-  return { bookLink, state, drawerCtl: null };
+  // Adress till en viss sida i originalet hos Harvard. vol = 1–10 (översättningens volym),
+  // page = sidan i översättningen (= sidan i den nedladdade PDF-filen för volymen).
+  function bookPageUrl(vol, page) {
+    const b = state.sources && state.sources.book;
+    vol = parseInt(String(vol).replace('vol', ''), 10);
+    page = parseInt(page, 10);
+    if (!b || !b.canvas_ids || !vol || !page || vol > b.vol_pages.length || page > b.vol_pages[vol - 1]) return '';
+    let seq = page;
+    for (let i = 0; i < vol - 1; i++) seq += b.vol_pages[i];
+    const id = b.canvas_ids[seq - 1];
+    return id ? b.viewer + encodeURIComponent(b.canvas_prefix + id) : '';
+  }
+  // Text som länkar till rätt sida i originalet (eller bara texten om sidan saknas).
+  function refLink(text, vol, page) {
+    const esc = (x) => String(x).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const u = bookPageUrl(vol, page);
+    return u ? `<a class="book-ref" href="${esc(u)}" target="_blank" rel="noopener" title="${esc(I18n.t('book_page_title'))}">${esc(text)}</a>` : esc(text);
+  }
+
+  return { bookLink, bookPageUrl, refLink, state, drawerCtl: null };
 })();

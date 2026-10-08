@@ -129,6 +129,20 @@ window.Unified = (function () {
       .join(', ');
   }
 
+  // Som sourceText, men varje hänvisning länkar till sidan i originalet hos Harvard.
+  function sourceHtml(vols, pages) {
+    vols = vols || [];
+    pages = pages || [];
+    if (!vols.length) return '';
+    return vols
+      .map((v, i) => {
+        const p = pages[i];
+        const n = String(parseInt(v.replace('vol', ''), 10));
+        return p != null ? App.refLink(T('src_ref', { v: n, p }), n, p) : esc(T('src_vol', { v: n }));
+      })
+      .join(', ');
+  }
+
   function spouseList(sp) {
     return (sp || [])
       .map((s) => {
@@ -257,7 +271,7 @@ window.Unified = (function () {
       if (r.note) html += `<div class="d-section-label">${T('sec_note')}</div><p class="d-note">${esc(I18n.dt(r.note))}</p>`;
       if (r.notes) html += `<div class="d-section-label">${T('sec_source_note')}</div><p class="d-note">${esc(r.notes)}</p>`;
       const src = sourceText(r.source_volumes, r.source_pages);
-      if (src) html += `<div class="d-section-label">${T('sec_source')}</div><p class="d-note">七修北山楊氏族譜 (1857), ${esc(src)} ${App.bookLink()}</p>`;
+      if (src) html += `<div class="d-section-label">${T('sec_source')}</div><p class="d-note">七修北山楊氏族譜 (1857), ${sourceHtml(r.source_volumes, r.source_pages)} ${App.bookLink()}</p>`;
       const pls = personPlaces(id);
       if (pls.length) {
         html += `<div class="d-section-label">${T('sec_places')}</div><div class="d-places">` +
@@ -265,7 +279,7 @@ window.Unified = (function () {
             .map(
               (x) =>
                 `<button class="d-place" data-place="${esc(x.place.id)}" title="${esc(x.snippet || '')}"><strong>${esc(I18n.dt(x.place.name).split(' – ')[0])}</strong> · ${esc(relLabel(x.rel))}</button>` +
-                (x.snippet ? `<p class="d-note d-place-quote">”${esc(x.snippet)}” <span class="d-alias-reason">(${esc(sourceText([x.vol], [x.page]))})</span></p>` : '')
+                (x.snippet ? `<p class="d-note d-place-quote">”${esc(x.snippet)}” <span class="d-alias-reason">(${sourceHtml([x.vol], [x.page])})</span></p>` : '')
             )
             .join('') +
           '</div>';
@@ -278,7 +292,7 @@ window.Unified = (function () {
         html += r.aliases
           .map(
             (a) =>
-              `<p class="d-note"><strong class="zh">${esc(a.hanzi || '')}</strong> ${esc(a.pinyin || '')} · ${esc(sourceText(a.source_volumes, a.source_pages))}` +
+              `<p class="d-note"><strong class="zh">${esc(a.hanzi || '')}</strong> ${esc(a.pinyin || '')} · ${sourceHtml(a.source_volumes, a.source_pages)}` +
               (a.notes ? `<br><em>${esc(a.notes)}</em>` : '') +
               (a.spouses && a.spouses.length ? `<br>${T('alias_spouses')} ${spouseList(a.spouses)}` : '') +
               `<br><span class="d-alias-reason">${esc(I18n.dt(a.reason || ''))}</span></p>`

@@ -981,3 +981,5 @@ body.cf-open { overflow: hidden; }
 .book-link { color: var(--color-primary); text-decoration: underline; font-style: normal; white-space: nowrap; }
 .book-link:hover { color: var(--color-primary-hover); }
 .stories-book { margin-top: var(--space-3) !important; font-size: var(--text-sm); }
+.book-ref { color: inherit; text-decoration: underline dotted; text-underline-offset: 2px; }
+.book-ref:hover { color: var(--color-primary); text-decoration-style: solid; }
