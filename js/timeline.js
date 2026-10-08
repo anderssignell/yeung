@@ -423,7 +423,8 @@
         .join('');
       if (people) html += `<div class="timeline-people"><span class="timeline-people-label">${esc(T('tl_in_tree'))}</span>${people}</div>`;
       if (it.general) html += `<p class="tl-card-note">${esc(T('tl_general'))}</p>`;
-      if (it.sources) html += `<p class="tl-card-note">${esc(T('st_source', { refs: it.sources.map((x) => T('st_vol', { vol: String(x.vol), pages: String(x.pages) })).join('; ') }))}</p>`;
+      if (it.sources) html += `<p class="tl-card-note">${esc(T('st_source', { refs: it.sources.map((x) => T('st_vol', { vol: String(x.vol), pages: String(x.pages) })).join('; ') }))} ${App.bookLink()}</p>`;
+      if (it.id === 'book_printed') html += `<p class="tl-card-note">${App.bookLink()}</p>`;
       if (/†/.test(D(it.text) + D(it.title))) html += `<p class="tl-card-note">${esc(T('tl_namenote'))}</p>`;
       html += `<div class="tl-card-actions"><button type="button" class="tl-zoomto">${esc(T('tl_zoom_to'))}</button>`;
       if (it.story) html += `<button type="button" class="tl-zoomto tl-story-link" data-story="${esc(it.story)}">📖 ${esc(T('st_read'))}</button>`;

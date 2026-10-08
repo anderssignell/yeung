@@ -257,7 +257,7 @@ window.Unified = (function () {
       if (r.note) html += `<div class="d-section-label">${T('sec_note')}</div><p class="d-note">${esc(I18n.dt(r.note))}</p>`;
       if (r.notes) html += `<div class="d-section-label">${T('sec_source_note')}</div><p class="d-note">${esc(r.notes)}</p>`;
       const src = sourceText(r.source_volumes, r.source_pages);
-      if (src) html += `<div class="d-section-label">${T('sec_source')}</div><p class="d-note">七修北山楊氏族譜 (1857), ${esc(src)}</p>`;
+      if (src) html += `<div class="d-section-label">${T('sec_source')}</div><p class="d-note">七修北山楊氏族譜 (1857), ${esc(src)} ${App.bookLink()}</p>`;
       const pls = personPlaces(id);
       if (pls.length) {
         html += `<div class="d-section-label">${T('sec_places')}</div><div class="d-places">` +

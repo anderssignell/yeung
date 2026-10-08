@@ -50,7 +50,9 @@
     if (!data) return;
     document.getElementById('customs-intro-text').textContent = I18n.dt(data.intro);
     document.getElementById('customs-groups').innerHTML = data.sections.map(renderGroup).join('');
-    document.getElementById('customs-source').textContent = I18n.dt(data.source_note);
+    const src = document.getElementById('customs-source');
+    src.textContent = I18n.dt(data.source_note) + ' ';
+    src.insertAdjacentHTML('beforeend', App.bookLink());
     rendered = true;
   }
 

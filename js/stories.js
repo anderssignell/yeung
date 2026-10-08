@@ -45,12 +45,14 @@ window.Stories = (function () {
           ${st.timeline && st.year != null ? `<button type="button" class="tl-zoomto" data-tl="${esc(st.id)}">${esc(T('st_on_timeline'))}</button>` : ''}
           ${place ? `<button class="timeline-place-link" data-place="${esc(st.place_id)}">📍 ${esc(D(place.name).split(' – ')[0])} — ${esc(T('tl_on_map'))}</button>` : ''}
         </div>
-        <p class="story-source">${esc(sourceLine(st))}</p>
+        <p class="story-source">${esc(sourceLine(st))} ${App.bookLink()}</p>
       </article>`;
   }
 
   function render() {
     S.data = App.state.stories || { themes: [], stories: [] };
+    const bookP = document.getElementById('stories-book');
+    if (bookP) bookP.innerHTML = App.bookLink();
     const nav = document.getElementById('stories-themes');
     const list = document.getElementById('stories-list');
     if (!nav || !list) return;

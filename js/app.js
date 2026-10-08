@@ -12,7 +12,7 @@ window.App = (function () {
 
   async function loadData() {
     const get = (name) => window.SiteLock.fetchJSON(name);
-    const [unified, timeline, places, customs, placesExt, contributions, config, stories] = await Promise.all([
+    const [unified, timeline, places, customs, placesExt, contributions, config, stories, sources] = await Promise.all([
       get('unified.json'),
       get('timeline.json'),
       get('places.json'),
@@ -21,7 +21,9 @@ window.App = (function () {
       get('contributions.json').catch(() => ({ items: [] })), // godkända bidrag (tools/import_contributions.py)
       get('config.json').catch(() => null), // bidragsmottagaren (build_public.py)
       get('stories.json').catch(() => ({ themes: [], stories: [] })), // berättelser ur släktboken
+      get('sources.json').catch(() => ({})), // länk till originalet (Harvard)
     ]);
+    state.sources = sources;
     state.stories = stories;
     state.contributions = contributions;
     state.config = config;
@@ -121,5 +123,13 @@ window.App = (function () {
 
   document.addEventListener('DOMContentLoaded', boot);
 
-  return { state, drawerCtl: null };
+  // Länk till det digitaliserade originalet av släktboken (data/sources.json).
+  function bookLink(cls) {
+    const b = state.sources && state.sources.book;
+    if (!b || !b.url) return '';
+    const esc = (x) => String(x).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    return `<a class="book-link${cls ? ' ' + cls : ''}" href="${esc(b.url)}" target="_blank" rel="noopener">${esc(I18n.t('book_original'))} ↗</a>`;
+  }
+
+  return { bookLink, state, drawerCtl: null };
 })();

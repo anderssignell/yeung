@@ -976,3 +976,8 @@ body.cf-open { overflow: hidden; }
   .stories-themes::-webkit-scrollbar { display: none; }
   .stories-theme { flex: none; }
 }
+
+/* Länk till originalet hos Harvard */
+.book-link { color: var(--color-primary); text-decoration: underline; font-style: normal; white-space: nowrap; }
+.book-link:hover { color: var(--color-primary-hover); }
+.stories-book { margin-top: var(--space-3) !important; font-size: var(--text-sm); }
