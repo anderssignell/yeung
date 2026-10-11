@@ -96,9 +96,11 @@ window.Contribute = (function () {
           <label class="cf-label" for="cf-text" data-i18n="cf_text"></label>
           <textarea id="cf-text" name="text" rows="6" maxlength="20000" data-i18n-attr="placeholder:cf_text_ph"></textarea>
           <div class="cf-row">
-            <div><label class="cf-label" for="cf-name" data-i18n="cf_name"></label><input id="cf-name" name="name" maxlength="200" autocomplete="name"></div>
-            <div><label class="cf-label" for="cf-contact" data-i18n="cf_contact"></label><input id="cf-contact" name="contact" maxlength="200" data-i18n-attr="placeholder:cf_contact_ph"></div>
+            <div><label class="cf-label" for="cf-name" data-i18n="cf_name"></label><input id="cf-name" name="name" maxlength="200" autocomplete="name" required></div>
+            <div><label class="cf-label" for="cf-email" data-i18n="cf_email"></label><input id="cf-email" name="email" type="email" maxlength="200" autocomplete="email" inputmode="email" required></div>
           </div>
+          <label class="cf-label" for="cf-contact" data-i18n="cf_contact"></label>
+          <input id="cf-contact" name="contact" maxlength="200" data-i18n-attr="placeholder:cf_contact_ph">
           <label class="cf-label" for="cf-relation" data-i18n="cf_relation"></label>
           <input id="cf-relation" name="relation" maxlength="300" data-i18n-attr="placeholder:cf_relation_ph">
           <span class="cf-label" data-i18n="cf_images"></span>
@@ -209,6 +211,14 @@ window.Contribute = (function () {
       showError('');
       const text = val('#cf-text');
       if (!text && !st.images.length) return showError(T('cf_err_empty'));
+      if (!val('#cf-name')) {
+        form.querySelector('#cf-name').focus();
+        return showError(T('cf_err_name'));
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val('#cf-email'))) {
+        form.querySelector('#cf-email').focus();
+        return showError(T('cf_err_email'));
+      }
       const cfg = config();
       if (!cfg || !cfg.endpoint || !cfg.public_key) return showError(T('cf_not_open'));
       const btn = form.querySelector('button[type=submit]');
@@ -229,6 +239,7 @@ window.Contribute = (function () {
           subject: st.subject ? { kind: st.subject.kind, id: st.subject.id, label: subjectLabel(st.subject) } : null,
           text,
           name: val('#cf-name'),
+          email: val('#cf-email'),
           contact: val('#cf-contact'),
           relation: val('#cf-relation'),
           consent: images.length ? form.querySelector('input[name=consent]').checked : null,

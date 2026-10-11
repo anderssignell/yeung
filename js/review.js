@@ -117,6 +117,7 @@
     const dl = [
       ['Gäller', subjectLink(p.subject)],
       ['Namn', esc(p.name) || '<em>inte angivet</em>'],
+      ['E-post', p.email ? `<a href="mailto:${esc(p.email)}">${esc(p.email)}</a>` : '<em>inte angivet</em>'],
       ['Kontakt', esc(p.contact) || '<em>inte angivet</em>'],
       ['Relation', esc(p.relation) || '<em>inte angivet</em>'],
     ];
