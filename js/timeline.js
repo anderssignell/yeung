@@ -14,7 +14,7 @@
   const BAR_H = 18;
   const GEN_H = 74;
   const LABEL_MAX = 250; // px, längre titlar kortas (hela titeln visas i kortet)
-  const YEARS_PER_GEN = 28.75; // 1237 (generation 1) → ca. 1782 (generation 20), som i släktträdet
+  const YEARS_PER_GEN = 30; // bara för att förlänga utanför de daterade generationerna
   const GEN_START = 1237;
   const NOW = new Date().getFullYear();
 
@@ -118,20 +118,58 @@
           sources: x.sources,
         })
       );
-    // Generationer ur släktträdet (uppskattade år)
+    // Generationer ur släktträdet. Mittåret = median av födelseåren i generationen
+    // (dokumenterade + uppskattade utifrån släktingar); spannet går halvvägs till grannarna.
     const counts = {};
+    const docs = {};
+    const years = {};
     (App.state.unified || []).forEach((r) => {
       const g = r.generation;
-      if (typeof g === 'number' && g >= 1) counts[g] = (counts[g] || 0) + 1;
+      if (!(typeof g === 'number' && g >= 1)) return;
+      counts[g] = (counts[g] || 0) + 1;
+      if (r.birth_year) docs[g] = (docs[g] || 0) + 1;
+      const y = r.birth_year || (r.birth_est && !r.birth_est_gen ? r.birth_est : null);
+      if (y && !r.gen_mismatch && !r.date_conflict) (years[g] = years[g] || []).push(y);
     });
     const max = Math.max(1, ...Object.values(counts));
-    S.gens = Object.keys(counts)
-      .map(Number)
-      .sort((a, b) => a - b)
-      .map((g) => {
-        const from = Math.round(GEN_START + (g - 1) * YEARS_PER_GEN);
-        return { id: 'gen_' + g, g, n: counts[g], from, to: Math.round(from + YEARS_PER_GEN), rel: Math.sqrt(counts[g] / max) };
-      });
+    const gs = Object.keys(counts).map(Number).sort((a, b) => a - b);
+    const median = (v) => {
+      v = v.slice().sort((a, b) => a - b);
+      const m = v.length >> 1;
+      return v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2;
+    };
+    const known = gs.filter((g) => (years[g] || []).length >= 5).map((g) => [g, median(years[g])]);
+    const mid = (g) => {
+      const hit = known.find((k) => k[0] === g);
+      if (hit) return hit[1];
+      const lo = known.filter((k) => k[0] < g).pop();
+      const hi = known.find((k) => k[0] > g);
+      if (lo && hi) return lo[1] + ((hi[1] - lo[1]) * (g - lo[0])) / (hi[0] - lo[0]);
+      if (lo) return lo[1] + (g - lo[0]) * YEARS_PER_GEN;
+      if (hi) return hi[1] - (hi[0] - g) * YEARS_PER_GEN;
+      return GEN_START + (g - 1) * YEARS_PER_GEN;
+    };
+    const mids = {};
+    let prev = -Infinity;
+    gs.forEach((g) => {
+      mids[g] = Math.max(mid(g), prev + 5); // alltid stigande
+      prev = mids[g];
+    });
+    S.gens = gs.map((g, i) => {
+      const m = mids[g];
+      const before = i > 0 ? mids[gs[i - 1]] : m - YEARS_PER_GEN;
+      const after = i < gs.length - 1 ? mids[gs[i + 1]] : m + YEARS_PER_GEN;
+      return {
+        id: 'gen_' + g,
+        g,
+        n: counts[g],
+        d: docs[g] || 0,
+        mid: Math.round(m),
+        from: Math.round((before + m) / 2),
+        to: Math.round((m + after) / 2),
+        rel: Math.sqrt(counts[g] / max),
+      };
+    });
   }
 
   // ------------------------------------------------------------------ skala
@@ -404,7 +442,7 @@
       html += `<div class="tl-card-lane lane-generations">${esc(T('tl_lane_generations'))}</div>`;
       html += `<div class="timeline-year">${esc(T('tl_gen_years', { from: String(it.from), to: String(it.to) }))}<span class="approx-tag">${esc(T('approx'))}</span></div>`;
       html += `<h3>${esc(T('tl_gen_title', { g: String(it.g) }))}</h3>`;
-      html += `<p>${esc(T('tl_gen_text', { n: it.n, g: String(it.g) }))}</p>`;
+      html += `<p>${esc(T('tl_gen_text', { n: it.n, g: String(it.g), d: String(it.d), m: String(it.mid) }))}</p>`;
       if (it.g >= 21) html += `<p class="tl-card-note">${esc(T('tl_gen_note'))}</p>`;
       html += `<div class="tl-card-actions"><button type="button" class="tl-zoomto">${esc(T('tl_zoom_to'))}</button></div>`;
       card.dataset.from = it.from;

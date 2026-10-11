@@ -108,10 +108,52 @@ window.Unified = (function () {
     return hits.slice(0, limit || 40);
   }
 
+  // Kort årtal för listor: dokumenterat ("1749–1775", "f. 1835") eller uppskattat ("ca. 1840").
+  function yearShort(r) {
+    if (r.birth_year && r.birth_doc === 'book') {
+      const b = (r.birth_from_age ? '~' : '') + r.birth_year;
+      return r.death_year ? `${b}–${r.death_from_age ? '~' : ''}${r.death_year}` : T('yr_b_short', { y: b });
+    }
+    if (r.birth_year) return String(r.birth_year);
+    if (r.birth_est) return T('yr_est_short', { y: String(r.birth_est) });
+    return I18n.dt(r.approx_year) || '';
+  }
+
+  // Utförliga rader för personkortet.
+  function yearsHtml(r) {
+    const out = [];
+    if (r.birth_doc === 'book') {
+      let t = r.birth_from_age ? T('yr_born_calc', { y: String(r.birth_year) }) : T('yr_born', { y: String(r.birth_year) });
+      if (r.birth_uncertain) t += ' ' + T('yr_uncertain');
+      out.push(`<p class="d-years">${esc(t)}</p>`);
+    }
+    if (r.birth_est) {
+      out.push(
+        `<p class="d-years">${esc(T('yr_est', { y: String(r.birth_est), pm: r.birth_est_pm }))}</p>`
+      );
+    }
+    if (r.death_year && r.death_doc === 'book') {
+      let t = r.death_from_age ? T('yr_died_calc', { y: String(r.death_year) }) : T('yr_died', { y: String(r.death_year) });
+      if (r.death_age) t += ', ' + T('yr_age', { a: r.death_age });
+      out.push(`<p class="d-years">${esc(t)}</p>`);
+    }
+    if (r.birth_est) {
+      const why = r.birth_est_gen ? T('yr_est_gen') : r.birth_est_steps ? T('yr_est_rel', { n: r.birth_est_steps }) : T('yr_est_death');
+      out.push(`<p class="d-note d-year-why">${esc(why)}</p>`);
+    }
+    if (r.date_conflict && idx.byId[r.date_conflict]) {
+      const p = idx.byId[r.date_conflict];
+      out.push(`<p class="d-note d-caveat">${esc(T('yr_conflict', { name: displayName(p), y: String(p.birth_year) }))}</p>`);
+    }
+    if (!out.length && !r.years && r.approx_year) out.push(`<p class="d-years">${esc(I18n.dt(r.approx_year))}</p>`);
+    return out.join('');
+  }
+
   function genText(r) {
-    if (r.generation == null) return I18n.dt(r.approx_year) || '';
+    const y = yearShort(r);
+    if (r.generation == null) return y;
     let t = T(r.generation_estimated ? 'gen_short_est' : 'gen_short', { g: r.generation });
-    if (r.approx_year) t += ' · ' + I18n.dt(r.approx_year);
+    if (y) t += ' · ' + y;
     if (r.branch) t += ' · ' + BRANCH_SHORT[r.branch];
     return t;
   }
@@ -229,13 +271,10 @@ window.Unified = (function () {
       }
       if (r.pinyin) html += `<p class="d-western">${esc(gapNode ? I18n.dt(r.pinyin) : r.pinyin + ' (Pinyin)')}</p>`;
       if (r.generation != null) {
-        let g = T(r.generation_estimated ? 'gen_long_est' : 'gen_long', { g: r.generation });
-        if (r.approx_year) g += ' · ' + I18n.dt(r.approx_year);
-        html += `<p class="d-generation">${esc(g)}</p>`;
-      } else if (r.approx_year) {
-        html += `<p class="d-generation">${esc(I18n.dt(r.approx_year))}</p>`;
+        html += `<p class="d-generation">${esc(T(r.generation_estimated ? 'gen_long_est' : 'gen_long', { g: r.generation }))}</p>`;
       }
       if (r.years) html += `<p class="d-years">${esc(I18n.dt(r.years))}</p>`;
+      html += yearsHtml(r);
       if (r.private) html += `<p class="d-note d-caveat">${T('private_note')}</p>`;
 
       const badges = [];
@@ -393,6 +432,7 @@ window.Unified = (function () {
     ancestors,
     displayName,
     genText,
+    yearShort,
     openDrawer,
     closeDrawer,
     setRevealHandler,
